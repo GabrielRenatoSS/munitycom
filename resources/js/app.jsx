@@ -10,3 +10,5 @@ function App() {
     )
 }
 ReactDOM.createRoot(document.getElementById('app')).render(<App />)
+
+//aqui tu vai ter que tirar oq tá e configurar algo sobre a navegação de páginas, mas não sei pq não sei React

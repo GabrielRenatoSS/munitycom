@@ -17,11 +17,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    protected $fillable = ['name', 'email', 'password', 'username', 'tipo', 'foto', 'estado', 'pais', 'cidade',];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -44,5 +40,31 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function following(): BelongsToMany {
+        return $this->belongsToMany(
+            User::class,  
+            'followers',  
+            'follower_id', 
+            'following_id' 
+        );
+    }
+
+    public function followers(): BelongsToMany {
+        return $this->belongsToMany(
+            User::class, 
+            'followers', 
+            'following_id',
+            'follower_id'
+        );
+    }
+
+    public function isFollowing(User $user) {
+        return $this->following()->where('following_id', $user->id)->exists();
+    }
+
+    public function isMun() {
+        return $this->tipo === 1;
     }
 }
