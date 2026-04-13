@@ -1,14 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import './bootstrap';
 import '../css/app.css';
+import { createRoot } from 'react-dom/client';
+import { createInertiaApp } from '@inertiajs/react';
 
-function App() {
-    return (
-        <div className="bg-red-500 text-white p-10">
-            TESTE TAILWIND
-        </div>
-    )
-}
-ReactDOM.createRoot(document.getElementById('app')).render(<App />)
-
-//aqui tu vai ter que tirar oq tá e configurar algo sobre a navegação de páginas, mas não sei pq não sei React
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
+        return pages[`./Pages/${name}.jsx`].default;
+    },
+    setup({ el, App, props }) {
+        createRoot(el).render(<App {...props} />);
+    },
+});
