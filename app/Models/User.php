@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -66,5 +67,35 @@ class User extends Authenticatable
 
     public function isMun() {
         return $this->tipo === 1;
+    }
+
+    public function interests() {
+        return $this->belongsToMany(User::class, 'interests', 'delegate_id', 'mun_id');
+    }
+
+    public function likedPosts() {
+        return $this->belongsToMany(Publication::class, 'likes');
+    }
+
+    public function participacoesSecretariado() {
+        return $this->hasMany(Secretariado::class);
+    }
+
+    public function participacoesComites() {
+        return $this->hasMany(MembroComite::class);
+    }
+
+    public function edicoes() {
+        return $this->hasMany(Edicao::class);
+    }
+
+    // Prêmios que este usuário recebeu
+    public function awards() {
+        return $this->hasMany(Award::class, 'user_id');
+    }
+
+    // Prêmios que esta MUN criou/deu para outros
+    public function createdAwards() {
+        return $this->hasMany(Award::class, 'mun_id');
     }
 }

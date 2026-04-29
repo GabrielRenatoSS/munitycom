@@ -4,6 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Publication;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\Award;
+use App\Models\Follower;
+use Illuminate\Support\Facades\Storage;
 
 class PublicationController extends Controller
 {
@@ -12,10 +18,39 @@ class PublicationController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        $authId = auth()->id();
+
         return Publication::query()
-            ->when($request->user_id, fn($q) => $q->where('user_id', $request->user_id))
+            ->when($request->type === 'following' && $user, function ($query) use ($user) {
+                $query->whereIn('user_id', $user->followings()->pluck('related_id'));
+            })
+            ->with(['user', 'images'])
+            ->withCount('likes')
+            ->withExists(['likes as is_liked' => function($q) use ($authId) {
+                $q->where('user_id', $authId);
+            }])
             ->latest()
-            ->cursorPaginate(10);
+            ->cursorPaginate(10)
+            ->through(function ($post) use ($authId) {
+                return array_filter([
+                    'id' => $post->id,
+                    'type' => $post->type,
+                    'descricao' => $post->descricao,
+                    'video' => $post->video ? asset('storage/' . $post->video) : null,
+                    'images' => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                    
+                    'username' => $post->user->username,
+                    'user_foto' => $post->user->foto 
+                        ? asset('storage/' . $post->user->foto) 
+                        : '/fotos_usuarios/foto.png',
+                    
+                    'likes_count' => $post->likes_count,
+                    'is_liked' => $post->is_liked,
+
+                    'can_edit' => $authId === $post->user_id, 
+                ], fn($v) => !is_null($v));
+            });
     }
 
     /**
@@ -79,37 +114,52 @@ class PublicationController extends Controller
      */
     public function show($id)
     {
-        $posts = Publication::with('images')->where('user_id', $id)->get();
+        $post = Publication::with(['images', 'user'])
+            ->withCount('likes')
+            ->withExists(['likes as is_liked' => function($q) {
+                $q->where('user_id', auth()->id());
+            }])
+            ->findOrFail($id);
 
-        $formattedPosts = $posts->map(function ($post) {
-            $data = [
-                'id' => $post->id,
-                'type' => $post->type,
-            ];
+        $formattedPost = array_filter([
+            'id' => $post->id,
+            'type' => $post->type,
+            'mun' => $post->mun,
+            'comite' => $post->comite,
+            'delegation' => $post->delegation,
+            'descricao' => $post->descricao,
+            'video' => $post->video ? asset('storage/' . $post->video) : null,
+            
+            'username' => $post->user->username,
+            'user_foto' => $post->user->foto 
+                ? asset('storage/' . $post->user->foto) 
+                : '/fotos_usuarios/foto.jpg',
+                
+            'images' => $post->images->isNotEmpty() 
+                ? $post->images->map(fn($img) => asset('storage/' . $img->path)) 
+                : null,
 
-            if ($post->mun) $data['mun'] = $post->mun;
-            if ($post->comite) $data['comite'] = $post->comite;
-            if ($post->delegation) $data['delegation'] = $post->delegation;
-            if ($post->descricao) $data['descricao'] = $post->descricao;
-            if ($post->video) $data['video'] = asset('storage/' . $post->video);
-        
-            if ($post->images->isNotEmpty()) {
-                $data['images'] = $post->images->map(fn($img) => asset('storage/' . $img->path));
-            }
+            'likes_count' => $post->likes_count,
+            'is_liked' => $post->is_liked,
+            
+            'can_edit' => auth()->check() && auth()->id() === $post->user_id,
 
-            return $data;
+        ], function ($value) {
+            return !is_null($value);
         });
 
-        return Inertia::render('User/Show', ['posts' => $formattedPosts]);
+        return Inertia::render('Publication/Show', [
+            'post' => $formattedPost
+        ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Publication $publication)
+    public function edit(string $id)
     {
         //formulário de edição
-        $publication = Publication::findOrFail($id);
+        $publication = Publication::with('user')->findOrFail($id);
 
         if ($publication->user_id !== auth()->id()) {
             abort(403);
@@ -123,7 +173,7 @@ class PublicationController extends Controller
                 'comite' => $publication->comite,
                 'delegation' => $publication->delegation,
                 'mun' => $publication->mun,
-                'username' => $publiation->user->username,
+                'username' => $publication->user->username,
             ]
         ]);
     }

@@ -4,18 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Award;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Inertia\Inertia;
 
 class AwardController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Award::query()
-            ->when($request->user_id, fn($q) => $q->where('user_id', $request->user_id))
-            ->latest()
-            ->cursorPaginate(10);
+        return Award::whereRaw('1 = 0')->paginate(10);
     }
 
     /**
@@ -63,9 +62,15 @@ class AwardController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Award $award)
+    public function show(string $id)
     {
         $award = Award::with(['user', 'creator'])->findOrFail($id);
+        $authId = auth()->id();
+
+        $canEdit = $authId && (
+            $authId === $award->user_id || 
+            ($award->mun_id && $authId === $award->mun_id)
+        );
 
         $data = [
             'id' => $award->id,
@@ -74,6 +79,8 @@ class AwardController extends Controller
             'delegation' => $award->delegation,
             'comite' => $award->comite,
             'user_username' => $award->user->username,
+            'user_foto' => $award->user->foto ? asset('storage/' . $award->user->foto) : '/fotos_usuarios/foto.jpg',
+            'can_edit' => $canEdit,
         ];
 
         if ($award->mun_id) {
@@ -88,7 +95,7 @@ class AwardController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Award $award)
+    public function edit(string $id)
     {
         //formulário de edição
         $award = Award::findOrFail($id);
