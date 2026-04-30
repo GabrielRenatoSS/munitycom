@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\EdicaoController;
 use App\Http\Controllers\MembroComiteController;
+use App\Http\Controllers\SpottedController;
+use App\Http\Controllers\DocumentoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -68,4 +70,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/followers', [FollowerController::class, 'followers'])->name('users.followers');
         Route::get('/friends', [FollowerController::class, 'friends'])->name('users.friends');
     });
+
+    Route::post('/spotteds', [SpottedController::class, 'store'])->name('spotteds.store');
+    Route::resource('documentos', DocumentoController::class)->except(['index']);
 });

@@ -131,6 +131,50 @@ class UserController extends Controller
                     ];
                 });
 
+            $spotteds = null;
+
+            if ($request->input('type') == 6) {
+                $spottedQuery = Spotted::with([
+                        'remetente:id,delegacao',
+                        'destinatario:id,delegacao',
+                        'comite:id,name',
+                    ])
+                    ->where('destinatario_id', function ($q) use ($user) {
+                        $q->select('id')
+                        ->from('membro_comites')
+                        ->where('user_id', $user->id);
+                    });
+
+                if (!$isOwnProfile) {
+                    $spottedQuery->where(function ($q) use ($authId) {
+                        $q->where('tipo', 0)
+                        ->orWhere(function ($q2) use ($authId) {
+                            $q2->where('tipo', 1)
+                                ->whereIn('remetente_id', function ($q3) use ($authId) {
+                                    $q3->select('id')
+                                        ->from('membro_comites')
+                                        ->where('user_id', $authId);
+                                });
+                        });
+                    });
+                }
+
+                $spotteds = $spottedQuery->latest()
+                    ->paginate(10, ['*'], 'spotteds_page')
+                    ->withQueryString()
+                    ->through(function ($spotted) {
+                        return [
+                            'id'           => $spotted->id,
+                            'mensagem'     => $spotted->mensagem,
+                            'tipo'         => $spotted->tipo,
+                            'anonimo'      => $spotted->anonimo,
+                            'comite'       => $spotted->comite?->name,
+                            'remetente'    => $spotted->anonimo ? null : $spotted->remetente?->delegacao,
+                            'destinatario' => $spotted->destinatario?->delegacao,
+                        ];
+                    });
+            }
+
             $interests = $user->interests()
                 ->latest()
                 ->limit(6)
@@ -144,20 +188,21 @@ class UserController extends Controller
 
             return Inertia::render('User/Show', [
                 'user' => [
-                    'id'          => $user->id,
-                    'name'        => $user->name,
-                    'username'    => $user->username,
-                    'tipo'        => $user->tipo,
-                    'foto'        => $user->foto ? Storage::url($user->foto) : '/fotos_usuarios/foto.jpg',
-                    'ft_perfil'   => $user->ft_perfil ? Storage::url($user->ft_perfil) : '/fotos_perfis/foto-perfil.png',
-                    'progresso'   => $user->progresso,
-                    'seguindo'    => $seguindo,
-                    'seguidores'  => $seguidores,
-                    'amigos'      => $amigos,
+                    'id'           => $user->id,
+                    'name'         => $user->name,
+                    'username'     => $user->username,
+                    'tipo'         => $user->tipo,
+                    'foto'         => $user->foto ? Storage::url($user->foto) : '/fotos_usuarios/foto.jpg',
+                    'ft_perfil'    => $user->ft_perfil ? Storage::url($user->ft_perfil) : '/fotos_perfis/foto-perfil.png',
+                    'progresso'    => $user->progresso,
+                    'seguindo'     => $seguindo,
+                    'seguidores'   => $seguidores,
+                    'amigos'       => $amigos,
                     'is_following' => $isFollowing,
                 ],
                 'posts'          => $posts,
                 'awards'         => $awards,
+                'spotteds'       => $spotteds,
                 'interests'      => $interests,
                 'filters'        => $request->only('type'),
                 'is_own_profile' => $isOwnProfile,
@@ -166,16 +211,11 @@ class UserController extends Controller
 
         // ─── PERFIL DE MUN (tipo 1) ───────────────────────────────────────────────
 
-        // Edições da MUN com seus comitês
-        // Se o usuário logado não for a própria MUN, filtra apenas
-        // os comitês em que ele é membro; caso contrário retorna todos.
         $edicoes = Edicao::where('user_id', $user->id)
             ->with(['comites' => function ($q) use ($authId, $user) {
                 if ($authId && $authId !== $user->id) {
-                    // Delegado logado: só os comitês em que participa
                     $q->whereHas('membros', fn($m) => $m->where('user_id', $authId));
                 }
-                // A própria MUN (ou visitante não logado): todos os comitês
             }])
             ->latest()
             ->get()
@@ -191,12 +231,11 @@ class UserController extends Controller
                 ]),
             ]);
 
-        // Posts da MUN filtrados por edição
-        // Quando um comitê está selecionado, não carrega posts (seção de documentos — TODO)
         $edicaoId = $request->input('edicao_id');
         $comiteId = $request->input('comite_id');
 
         $posts = null;
+        $documents = null;
 
         if (!$comiteId) {
             $posts = Publication::with('images')
@@ -232,9 +271,46 @@ class UserController extends Controller
                         'can_edit'   => $authId === $post->user_id,
                     ], fn($v) => !is_null($v));
                 });
-        }
+        } else {
+            $documents = Documento::with([
+                    'patrocinadores.delegado:id,user_id,delegacao',
+                    'signatarios.delegado:id,delegacao',
+                ])
+                ->where('comite_id', $comiteId)
+                ->latest()
+                ->paginate(10, ['*'], 'documents_page')
+                ->withQueryString()
+                ->through(function ($documento) use ($authId, $user) {
 
-        // TODO: quando $comiteId estiver presente, carregar documentos do comitê aqui
+                    $ehPatrocinador = $documento->patrocinadores
+                        ->contains(fn($p) => $p->delegado?->user_id === $authId);
+
+                    $ehMun = $authId === $user->id;
+
+                    $ehChairOuMesa = MembroComite::where('user_id', $authId)
+                        ->where('comite_id', $documento->comite_id)
+                        ->whereRaw('LOWER(delegacao) IN (?)', [['chair', 'mesa', 'mesa diretora']])
+                        ->exists();
+
+                    return [
+                        'id' => $documento->id,
+                        'tipo' => $documento->tipo,
+                        'conteudo' => $documento->conteudo,
+                        'brasao' => $documento->brasao ? Storage::url($documento->brasao) : null,
+                        'foto1'  => $documento->foto1  ? Storage::url($documento->foto1)  : null,
+                        'foto2'  => $documento->foto2  ? Storage::url($documento->foto2)  : null,
+                        'foto3'  => $documento->foto3  ? Storage::url($documento->foto3)  : null,
+                        'foto4'  => $documento->foto4  ? Storage::url($documento->foto4)  : null,
+                        'patrocinadores'  => $documento->patrocinadores->isNotEmpty()
+                            ? $documento->patrocinadores->map(fn($p) => $p->delegado?->delegacao)
+                            : null,
+                        'signatarios'     => $documento->signatarios->isNotEmpty()
+                            ? $documento->signatarios->map(fn($s) => $s->delegado?->delegacao)
+                            : null,
+                        'is_own_document' => $authId && ($ehPatrocinador || $ehMun || $ehChairOuMesa),
+                    ];
+                });
+        }
 
         return Inertia::render('User/Show', [
             'user' => [
@@ -250,10 +326,11 @@ class UserController extends Controller
                 'amigos'       => $amigos,
                 'is_following' => $isFollowing,
             ],
-            'posts'    => $posts,      // null quando comitê selecionado — front oculta a seção
-            'documents' => null,       // TODO: preencher quando implementar documentos de comitê
-            'edicoes'  => $edicoes,
-            'filters'  => $request->only(['edicao_id', 'comite_id']),
+            'posts'          => $posts,
+            'documents'      => $documents,
+            'spotteds'       => null,
+            'edicoes'        => $edicoes,
+            'filters'        => $request->only(['edicao_id', 'comite_id']),
             'is_own_profile' => $isOwnProfile,
         ]);
     }

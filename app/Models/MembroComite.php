@@ -19,4 +19,14 @@ class MembroComite extends Model
     public function comite() {
         return $this->belongsTo(Comite::class);
     }
+
+    public function spottetsEnviados()
+    {
+        return $this->hasMany(Spotted::class, 'remetente_id');
+    }
+
+    public function spottetsRecebidos()
+    {
+        return $this->hasMany(Spotted::class, 'destinatario_id');
+    }
 }

@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('spotteds', function (Blueprint $table) {
+        Schema::create('documentos', function (Blueprint $table) {
             $table->id();
-            $table->boolean('tipo'); //0 é publico, 1 é privado
-            $table->boolean('anonimo'); //0 é normal, 1 é anônimo
-            $table->string('mensagem');
-            $table->foreign_id('remetente_id')->constrained('membro_comites')->onDelete('cascade');
-            $table->foreign_id('destinatario_id')->constrained('membro_comites')->onDelete('cascade');
+            $table->integer('tipo');
+            $table->string('conteudo');
             $table->foreign_id('comite_id')->constrained('comites')->onDelete('cascade');
+            $table->string('brasao')->nullable();
+            $table->string('foto1')->nullable();
+            $table->string('foto2')->nullable();
+            $table->string('foto3')->nullable();
+            $table->string('foto4')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('spotteds');
+        Schema::dropIfExists('documentos');
     }
 };

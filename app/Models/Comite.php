@@ -18,4 +18,14 @@ class Comite extends Model
     public function membros() {
         return $this->hasMany(MembroComite::class);
     }
+
+    public function documentos()
+    {
+        return $this->hasMany(Documento::class);
+    }
+
+    public function spotteds()
+    {
+        return $this->hasMany(Spotted::class);
+    }
 }

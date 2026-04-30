@@ -7,20 +7,9 @@ use Illuminate\Http\Request;
 
 class SpottedController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return Inertia::render('Spotted/Create');
     }
 
     /**
@@ -28,7 +17,18 @@ class SpottedController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $dados = $request->validate([
+            'tipo'            => 'required|boolean',
+            'mensagem'        => 'required|string|max:255',
+            'remetente_id'    => 'required|exists:membro_comites,id',
+            'destinatario_id' => 'required|exists:membro_comites,id',
+            'anonimo'         => 'nullable|boolean',
+        ]);
+
+        $dados['anonimo'] = $request->boolean('anonimo', false);
+        $spotted = Spotted::create($dados);
+
+        return redirect()->back();
     }
 
     /**
@@ -36,30 +36,14 @@ class SpottedController extends Controller
      */
     public function show(Spotted $spotted)
     {
-        //
-    }
+        $spotted->load('destinatario:id,delegacao');
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Spotted $spotted)
-    {
-        //
-    }
+        if (!$spotted->anonimo) {
+            $spotted->load('remetente:id,delegacao');
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Spotted $spotted)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Spotted $spotted)
-    {
-        //
+        return Inertia::render('Spotteds/Show', [
+            'spotted' => $spotted,
+        ]);
     }
 }
