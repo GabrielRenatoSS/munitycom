@@ -23,10 +23,11 @@ return new class extends Migration
             $table->integer('tipo');
             $table->string('foto')->nullable();
             $table->string('ft_perfil')->nullable();
-            $table->string('progresso')->nullable();
+            $table->integer('progresso');
             $table->string('cidade')->nullable();
             $table->string('estado')->nullable();
             $table->string('pais')->nullable();
+            $table->boolean('bloqueio');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

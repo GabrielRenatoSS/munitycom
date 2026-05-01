@@ -34,9 +34,34 @@ class FollowerController extends Controller
                 'follower_id'  => $authId,
                 'following_id' => $targetId,
             ]);
+
+            $userSeguido = User::find($targetId);
+            $this->atualizarProgresso($userSeguido);
         }
 
         return back();
+    }
+
+    private function atualizarProgresso(User $user): void
+    {
+        if ($user->tipo !== 0) return;
+    
+        $seguidores = Follower::where('following_id', $user->id)->count();
+
+        $novoProgresso = match(true) {
+            $seguidores >= 10000 => 7,
+            $seguidores >= 1000  => 6,
+            $seguidores >= 500   => 5,
+            $seguidores >= 200   => 4,
+            $seguidores >= 100   => 3,
+            $seguidores >= 50    => 2,
+            $seguidores >= 10    => 1,
+            default              => 0,
+        };
+
+        if ($novoProgresso > $user->progresso) {
+            $user->update(['progresso' => $novoProgresso]);
+        }
     }
 
     public function removeFollower(Request $request)

@@ -9,7 +9,11 @@ class SpottedController extends Controller
 {
     public function create()
     {
-        return Inertia::render('Spotted/Create');
+        $user = Auth::user();
+
+        return Inertia::render('Spotted/Create', [
+            'can_anonimo' => $user->progresso >= 4,
+        ]);
     }
 
     /**
@@ -17,18 +21,30 @@ class SpottedController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        if ($request->anonimo && $user->progresso < 4) {
+            abort(403);
+        }
+
         $dados = $request->validate([
             'tipo'            => 'required|boolean',
             'mensagem'        => 'required|string|max:255',
-            'remetente_id'    => 'required|exists:membro_comites,id',
             'destinatario_id' => 'required|exists:membro_comites,id',
+            'comite_id'       => 'required|exists:comites,id',
             'anonimo'         => 'nullable|boolean',
         ]);
 
-        $dados['anonimo'] = $request->boolean('anonimo', false);
-        $spotted = Spotted::create($dados);
+        $remetente = MembroComite::where('user_id', $user->id)
+            ->where('comite_id', $dados['comite_id'])
+            ->firstOrFail();
 
-        return redirect()->back();
+        $dados['anonimo']      = $request->boolean('anonimo', false);
+        $dados['remetente_id'] = $remetente->id;
+
+        Spotted::create($dados);
+
+        return redirect()->back()->with('success', 'Spotted enviado!');
     }
 
     /**

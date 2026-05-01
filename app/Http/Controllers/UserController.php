@@ -18,7 +18,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        //listar
+        $users = User::orderBy('id')
+            ->paginate(20);
+
+        return Inertia::render('Users/Index', [
+            'users' => $users,
+        ]);
     }
 
     /**
@@ -51,6 +56,9 @@ class UserController extends Controller
         $caminhoFoto = $request->file('foto')->store('fotos_usuarios', 'public');
         $data['foto'] = $caminhoFoto;
 
+        $data['bloqueio'] = false;
+        $data['progesso'] = 0;
+
         $data['password'] = Hash::make($data['password']);
         User::create($data);
 
@@ -77,9 +85,20 @@ class UserController extends Controller
                 $query->select('follower_id')->from('followers')->where('following_id', $user->id);
             })->count();
 
+        $authUser = auth()->user();
+        $canFix = $authUser && $isOwnProfile && (
+            $authUser->tipo === 1 ||
+            ($authUser->tipo === 0 && $authUser->progresso >= 5)
+        );
+
+        $canFav = $authUser && (
+            $authUser->tipo === 1 ||
+            ($authUser->tipo === 0 && $authUser->progresso >= 6)
+        );
+
         if ($user->tipo === 0) {
 
-            $posts = Publication::with('images')
+            $postsQuery = Publication::with('images')
                 ->where('user_id', $user->id)
                 ->when($request->has('type'), function ($q) use ($request) {
                     if (is_numeric($request->type) && $request->type >= 0 && $request->type <= 5) {
@@ -87,24 +106,35 @@ class UserController extends Controller
                     }
                     return $q->where('id', 0);
                 })
-                ->withCount('likes')
+                ->withCount(['likes', 'comentarios'])
                 ->withExists(['likes as is_liked' => function ($q) {
                     $q->where('user_id', auth()->id());
-                }])
-                ->latest()
-                ->paginate(10, ['*'], 'posts_page')
+                }]);
+
+            if (!$request->has('type')) {
+                $postsQuery->orderByDesc('fixo')->latest();
+            } else {
+                $postsQuery->latest();
+            }
+
+            $posts = $postsQuery->paginate(10, ['*'], 'posts_page')
                 ->withQueryString()
-                ->through(function ($post) use ($authId) {
+                ->through(function ($post) use ($authId, $canFix, $canFav) {
                     return array_filter([
-                        'id'          => $post->id,
-                        'type'        => $post->type,
-                        'mun'         => $post->mun,
-                        'comite'      => $post->comite,
-                        'delegation'  => $post->delegation,
-                        'descricao'   => $post->descricao,
-                        'video'       => $post->video ? asset('storage/' . $post->video) : null,
-                        'images'      => $post->images->map(fn($img) => asset('storage/' . $img->path)),
-                        'can_edit'    => $authId === $post->user_id,
+                        'id'                => $post->id,
+                        'type'              => $post->type,
+                        'mun'               => $post->mun,
+                        'comite'            => $post->comite,
+                        'delegation'        => $post->delegation,
+                        'descricao'         => $post->descricao,
+                        'video'             => $post->video ? asset('storage/' . $post->video) : null,
+                        'images'            => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                        'can_edit'          => $authId === $post->user_id,
+                        'can_fix'           => $canFix,
+                        'can_fav'           => $canFav,
+                        'fixo'              => $post->fixo,
+                        'likes_count'       => $post->likes_count,
+                        'comentarios_count' => $post->comentarios_count,
                     ], fn($v) => !is_null($v));
                 });
 
@@ -238,7 +268,7 @@ class UserController extends Controller
         $documents = null;
 
         if (!$comiteId) {
-            $posts = Publication::with('images')
+            $postsQuery = Publication::with('images')
                 ->where('user_id', $user->id)
                 ->when($edicaoId, function ($q) use ($edicaoId, $user) {
                     $ano = Edicao::where('id', $edicaoId)
@@ -251,24 +281,35 @@ class UserController extends Controller
                         $q->where('id', 0);
                     }
                 })
-                ->withCount('likes')
+                ->withCount(['likes', 'comentarios'])
                 ->withExists(['likes as is_liked' => function ($q) {
                     $q->where('user_id', auth()->id());
-                }])
-                ->latest()
-                ->paginate(10, ['*'], 'posts_page')
+                }]);
+
+            if (!$edicaoId) {
+                $postsQuery->orderByDesc('fixo')->latest();
+            } else {
+                $postsQuery->latest();
+            }
+
+            $posts = $postsQuery->paginate(10, ['*'], 'posts_page')
                 ->withQueryString()
-                ->through(function ($post) use ($authId) {
+                ->through(function ($post) use ($authId, $canFix, $canFav) {
                     return array_filter([
-                        'id'         => $post->id,
-                        'type'       => $post->type,
-                        'mun'        => $post->mun,
-                        'comite'     => $post->comite,
-                        'delegation' => $post->delegation,
-                        'descricao'  => $post->descricao,
-                        'video'      => $post->video ? asset('storage/' . $post->video) : null,
-                        'images'     => $post->images->map(fn($img) => asset('storage/' . $img->path)),
-                        'can_edit'   => $authId === $post->user_id,
+                        'id'                => $post->id,
+                        'type'              => $post->type,
+                        'mun'               => $post->mun,
+                        'comite'            => $post->comite,
+                        'delegation'        => $post->delegation,
+                        'descricao'         => $post->descricao,
+                        'video'             => $post->video ? asset('storage/' . $post->video) : null,
+                        'images'            => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                        'can_edit'          => $authId === $post->user_id,
+                        'can_fix'           => $canFix,
+                        'can_fav'           => $canFav,
+                        'fixo'              => $post->fixo,
+                        'likes_count'       => $post->likes_count,
+                        'comentarios_count' => $post->comentarios_count,
                     ], fn($v) => !is_null($v));
                 });
         } else {
@@ -293,14 +334,14 @@ class UserController extends Controller
                         ->exists();
 
                     return [
-                        'id' => $documento->id,
-                        'tipo' => $documento->tipo,
-                        'conteudo' => $documento->conteudo,
-                        'brasao' => $documento->brasao ? Storage::url($documento->brasao) : null,
-                        'foto1'  => $documento->foto1  ? Storage::url($documento->foto1)  : null,
-                        'foto2'  => $documento->foto2  ? Storage::url($documento->foto2)  : null,
-                        'foto3'  => $documento->foto3  ? Storage::url($documento->foto3)  : null,
-                        'foto4'  => $documento->foto4  ? Storage::url($documento->foto4)  : null,
+                        'id'              => $documento->id,
+                        'tipo'            => $documento->tipo,
+                        'conteudo'        => $documento->conteudo,
+                        'brasao'          => $documento->brasao ? Storage::url($documento->brasao) : null,
+                        'foto1'           => $documento->foto1  ? Storage::url($documento->foto1)  : null,
+                        'foto2'           => $documento->foto2  ? Storage::url($documento->foto2)  : null,
+                        'foto3'           => $documento->foto3  ? Storage::url($documento->foto3)  : null,
+                        'foto4'           => $documento->foto4  ? Storage::url($documento->foto4)  : null,
                         'patrocinadores'  => $documento->patrocinadores->isNotEmpty()
                             ? $documento->patrocinadores->map(fn($p) => $p->delegado?->delegacao)
                             : null,
@@ -473,5 +514,60 @@ class UserController extends Controller
             });
 
         return response()->json($muns);
+    }
+
+    public function toggleBloqueio(User $user)
+    {
+        $user->update(['bloqueio' => !$user->bloqueio]);
+
+        return redirect()->back();
+    }
+
+    public function ranking()
+    {
+        $authId = Auth::id();
+
+        if (Auth::user()->progresso < 2) {
+            abort(403);
+        }
+
+        $ranking = User::where('tipo', 0)
+            ->withCount('awards')
+            ->having('awards_count', '>', 0)
+            ->orderByDesc('awards_count')
+            ->orderBy('id')
+            ->limit(100)
+            ->get()
+            ->map(fn($user, $index) => [
+                'posicao'       => $index + 1,
+                'name'          => $user->name,
+                'username'      => $user->username,
+                'awards_count'  => $user->awards_count,
+            ]);
+
+        // posição do usuário logado entre todos os delegados
+        $todos = User::where('tipo', 0)
+            ->withCount('awards')
+            ->orderByDesc('awards_count')
+            ->orderBy('id')
+            ->get();
+
+        $posicaoAuth = $todos->search(fn($user) => $user->id === $authId);
+
+        $userAuth = $todos[$posicaoAuth] ?? null;
+
+        if ($userAuth) {
+            $ranking->push([
+                'posicao'      => $posicaoAuth + 1,
+                'name'         => $userAuth->name,
+                'username'     => $userAuth->username,
+                'awards_count' => $userAuth->awards_count,
+                'is_auth'      => true,
+            ]);
+        }
+
+        return Inertia::render('Users/Ranking', [
+            'ranking' => $ranking,
+        ]);
     }
 }

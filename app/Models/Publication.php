@@ -32,4 +32,13 @@ class Publication extends Model
     public function likes() {
         return $this->belongsToMany(User::class, 'likes');
     }
+
+    public function comentarios() {
+        return $this->hasMany(Comentario::class, 'publication_id');
+    }
+
+    public function favoritos()
+    {
+        return $this->hasMany(Favorito::class);
+    }
 }

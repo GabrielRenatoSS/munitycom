@@ -14,8 +14,20 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if(Auth::attempt($credenciais)) {
+        if (Auth::attempt($credenciais)) {
             $request->session()->regenerate();
+
+            if (Auth::user()->bloqueio) {
+                Auth::logout();
+                return back()->withErrors([
+                    'username' => 'Sua conta foi suspensa.',
+                ])->onlyInput('username');
+            }
+
+            if (Auth::user()->tipo === 2) {
+                return redirect()->route('users.index');
+            }
+
             return redirect()->intended('feed');
         } else {
             return back()->withErrors([

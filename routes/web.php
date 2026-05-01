@@ -10,6 +10,7 @@ use App\Http\Controllers\EdicaoController;
 use App\Http\Controllers\MembroComiteController;
 use App\Http\Controllers\SpottedController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\FeedbackController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -73,4 +74,25 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/spotteds', [SpottedController::class, 'store'])->name('spotteds.store');
     Route::resource('documentos', DocumentoController::class)->except(['index']);
+
+    Route::get('/feedback/create', [FeedbackController::class, 'create'])->name('feedback.create');
+    Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+
+    Route::post('/comentarios', [ComentarioController::class, 'store'])->name('comentarios.store');
+    Route::delete('/comentarios/{comentario}', [ComentarioController::class, 'destroy'])->name('comentarios.destroy');
+
+    Route::patch('/publications/{publication}/favorito', [PublicationController::class, 'toggleFavorito'])->name('publications.favorito');
+    Route::patch('/publications/{publication}/fixo', [PublicationController::class, 'toggleFixo'])->name('publications.fixo');
+    Route::get('/ranking', [UserController::class, 'ranking'])->name('users.ranking');
+    Route::get('/favoritos', [PublicationController::class, 'favoritos'])->name('publications.favoritos');
+});
+
+Route::middleware('admin')->group(function () {
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    
+    Route::patch('/users/{user}/bloqueio', [UserController::class, 'toggleBloqueio'])->name('users.bloqueio');
+
+    Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
+    Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+    Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
 });

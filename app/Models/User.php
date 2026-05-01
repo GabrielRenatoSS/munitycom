@@ -18,7 +18,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = ['name', 'email', 'password', 'username', 'tipo', 'foto', 'estado', 'pais', 'cidade',];
+    protected $fillable = ['name', 'email', 'password', 'username', 'tipo', 'foto', 'estado', 'pais', 'cidade', 'bloqueio'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -97,5 +97,16 @@ class User extends Authenticatable
     // Prêmios que esta MUN criou/deu para outros
     public function createdAwards() {
         return $this->hasMany(Award::class, 'mun_id');
+    }
+
+    // User.php
+    public function comentarios()
+    {
+        return $this->hasMany(Comentario::class);
+    }
+
+    public function favoritos()
+    {
+        return $this->hasMany(Favorito::class);
     }
 }
