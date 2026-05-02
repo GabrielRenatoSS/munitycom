@@ -33,4 +33,9 @@ class Spotted extends Model
     {
         return $this->belongsTo(Comite::class);
     }
+
+    public function notificacao()
+    {
+        return $this->hasOne(Notificacao::class);
+    }
 }

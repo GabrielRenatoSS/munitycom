@@ -13,4 +13,9 @@ class Follower extends Model
     protected $fillable = ['follower_id', 'following_id'];
 
     protected $table = 'followers';
+
+    public function notificacao()
+    {
+        return $this->hasOne(Notificacao::class);
+    }
 }

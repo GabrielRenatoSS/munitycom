@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Documento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\MembroComite;
+use App\Models\Patrocinador;
+use App\Models\Signatario;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class DocumentoController extends Controller
 {

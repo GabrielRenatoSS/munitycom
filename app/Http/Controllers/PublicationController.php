@@ -6,9 +6,8 @@ use App\Models\Publication;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use App\Models\Award;
-use App\Models\Follower;
+use App\Models\Comentario;
+use App\Models\Favorito;
 use Illuminate\Support\Facades\Storage;
 
 class PublicationController extends Controller

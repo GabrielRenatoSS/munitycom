@@ -14,4 +14,19 @@ class Like extends Model
         'publication_id',
         'user_id',
     ];
+
+    public function notificacao()
+    {
+        return $this->hasOne(Notificacao::class);
+    }
+
+    public function publication()
+    {
+        return $this->belongsTo(Publication::class, 'publication_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

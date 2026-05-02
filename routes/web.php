@@ -11,6 +11,10 @@ use App\Http\Controllers\MembroComiteController;
 use App\Http\Controllers\SpottedController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\NotificacaoController;
+use App\Http\Controllers\ComentarioController;
+use App\Http\Controllers\LikeController;
+use App\Http\Controllers\InterestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -85,14 +89,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/publications/{publication}/fixo', [PublicationController::class, 'toggleFixo'])->name('publications.fixo');
     Route::get('/ranking', [UserController::class, 'ranking'])->name('users.ranking');
     Route::get('/favoritos', [PublicationController::class, 'favoritos'])->name('publications.favoritos');
-});
+    Route::get('/notificacoes', [NotificacaoController::class, 'index'])->name('notificacoes.index');
 
-Route::middleware('admin')->group(function () {
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    
-    Route::patch('/users/{user}/bloqueio', [UserController::class, 'toggleBloqueio'])->name('users.bloqueio');
+    Route::middleware('admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        
+        Route::patch('/users/{user}/bloqueio', [UserController::class, 'toggleBloqueio'])->name('users.bloqueio');
 
-    Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
-    Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
-    Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
+        Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
+        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+        Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
+    });
 });

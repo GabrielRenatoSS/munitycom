@@ -25,4 +25,9 @@ class Comentario extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function notificacao()
+    {
+        return $this->hasOne(Notificacao::class);
+    }
 }

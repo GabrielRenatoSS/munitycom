@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Spotted;
 use Illuminate\Http\Request;
+use App\Models\MembroComite;
+use App\Models\Notificacao;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class SpottedController extends Controller
 {
@@ -42,9 +46,18 @@ class SpottedController extends Controller
         $dados['anonimo']      = $request->boolean('anonimo', false);
         $dados['remetente_id'] = $remetente->id;
 
-        Spotted::create($dados);
+        $spotted = Spotted::create($dados);
 
-        return redirect()->back()->with('success', 'Spotted enviado!');
+        $destinatario = MembroComite::find($dados['destinatario_id']);
+
+        Notificacao::create([
+            'user_id'    => $destinatario->user_id,
+            'spotted_id' => $spotted->id,
+            'tipo'       => 3,
+            'leitura'    => false,
+        ]);
+
+        return redirect()->back();
     }
 
     /**

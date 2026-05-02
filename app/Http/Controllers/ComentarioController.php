@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comentario;
+use App\Models\Notificacao;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use App\Models\Publication;
 
 class ComentarioController extends Controller
 {
@@ -21,11 +25,22 @@ class ComentarioController extends Controller
             'publication_id' => 'required|exists:publications,id',
         ]);
 
-        Comentario::create([
+        $comentario = Comentario::create([
             'texto'          => $validated['texto'],
             'publication_id' => $validated['publication_id'],
             'user_id'        => Auth::id(),
         ]);
+
+        $post = Publication::find($validated['publication_id']);
+
+        if ($post->user_id !== Auth::id()) {
+            Notificacao::create([
+                'user_id'       => $post->user_id,
+                'comentario_id' => $comentario->id,
+                'tipo'          => 1,
+                'leitura'       => false,
+            ]);
+        }
 
         return redirect()->back();
     }

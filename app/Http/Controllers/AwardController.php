@@ -6,6 +6,7 @@ use App\Models\Award;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class AwardController extends Controller
 {
@@ -122,7 +123,7 @@ class AwardController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $award = Award::findOrFail($id);
+        $award = Award::with('user')->findOrFail($id);    
         $user = auth()->user();
 
         $rules = [
@@ -157,7 +158,7 @@ class AwardController extends Controller
         }
         
         $award->update($updateData);
-        return redirect()->route('profile.show', $award->user_id);
+        return redirect()->route('profile.show', $award->user->username);
     }
 
     /**

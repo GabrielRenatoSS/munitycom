@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Models\Notificacao;
 
 class FollowerController extends Controller
 {
@@ -30,13 +31,20 @@ class FollowerController extends Controller
         if ($follow) {
             $follow->delete();
         } else {
-            Follower::create([
+            $follow = Follower::create([
                 'follower_id'  => $authId,
                 'following_id' => $targetId,
             ]);
 
             $userSeguido = User::find($targetId);
             $this->atualizarProgresso($userSeguido);
+
+            Notificacao::create([
+                'user_id'     => $targetId,
+                'follower_id' => $follow->id,
+                'tipo'        => 2,
+                'leitura'     => false,
+            ]);
         }
 
         return back();
@@ -61,6 +69,12 @@ class FollowerController extends Controller
 
         if ($novoProgresso > $user->progresso) {
             $user->update(['progresso' => $novoProgresso]);
+
+            Notificacao::create([
+                'user_id' => $user->id,
+                'tipo'    => 4,
+                'leitura' => false,
+            ]);
         }
     }
 

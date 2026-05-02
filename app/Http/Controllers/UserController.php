@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Publication;
 use App\Models\User;
 use App\Models\Follower;
+use App\Models\Award;
+use App\Models\Spotted;
+use App\Models\Edicao;
+use App\Models\Documento;
+use App\Models\MembroComite;
 
 class UserController extends Controller
 {
@@ -437,7 +442,7 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy()
+    public function destroy(Request $request)
     {
         $user = Auth::user();
         Auth::logout();
