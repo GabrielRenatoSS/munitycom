@@ -15,6 +15,8 @@ use App\Http\Controllers\NotificacaoController;
 use App\Http\Controllers\ComentarioController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\InterestController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,10 +28,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'authenticate']);
     
-    Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
-    Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('forgot-password.show');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('forgot-password.send');
+    Route::get('/verify-code', [ResetPasswordController::class, 'showCode'])->name('verify-code.show');
+    Route::post('/verify-code', [ResetPasswordController::class, 'verifyCode'])->name('verify-code.verify');
+    Route::get('/reset-password', [ResetPasswordController::class, 'showReset'])->name('reset-password.show');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('reset-password.reset');
 });
 
 Route::middleware('auth')->group(function () {
