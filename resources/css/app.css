@@ -2,3 +2,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import "tailwindcss";
+
+@theme {
+  --font-family-nimbus: "TAN Nimbus", serif;
+  --font-family-glacial: "Glacial Indifference", sans-serif;
+  --font-family-agrandir: "Agrandir", serif;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../fonts/Agrandir-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Agrandir';
+  src: url('../fonts/Agrandir-TextBold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'TAN Nimbus';
+  src: url('../fonts/TAN-NIMBUS.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Glacial Indifference';
+  src: url('../fonts/GlacialIndifference-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Glacial Indifference';
+  src: url('../fonts/GlacialIndifference-Bold.otf') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

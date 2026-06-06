@@ -42,12 +42,13 @@ class FollowerController extends Controller
             Notificacao::create([
                 'user_id'     => $targetId,
                 'follower_id' => $follow->id,
+                'like_id'     => null,
                 'tipo'        => 2,
                 'leitura'     => false,
             ]);
         }
 
-        return back();
+        return response()->json(['following' => !$follow]);
     }
 
     private function atualizarProgresso(User $user): void
@@ -91,52 +92,61 @@ class FollowerController extends Controller
             ->where('following_id', $authId)
             ->delete();
 
-        return back();
+        return response()->json(['ok' => true]);
     }
 
-    //aliados de conferência
+    // audiências diplomáticas — quem te segue
+    public function followers(User $user)
+    {
+        $authId = Auth::id();
+
+        return Follower::where('following_id', $user->id)
+            ->with('follower')
+            ->paginate(20)
+            ->through(fn($f) => $this->formatUser($f->follower, $authId));
+    }
+
+    // contatos diplomáticos — quem você segue
+    public function following(User $user)
+    {
+        $authId = Auth::id();
+
+        return Follower::where('follower_id', $user->id)
+            ->with('following')
+            ->paginate(20)
+            ->through(fn($f) => $this->formatUser($f->following, $authId));
+    }
+
+    // aliados de conferência — seguimento mútuo
     public function friends(User $user)
     {
-        $authId = $user->id;
+        $authId = Auth::id();
+        $userId = $user->id;
 
-        return User::whereIn('id', function($query) use ($authId) {
+        return User::whereIn('id', function($query) use ($userId) {
                 $query->select('following_id')
                     ->from('followers')
-                    ->where('follower_id', $authId)
-                    ->whereIn('following_id', function($q) use ($authId) {
+                    ->where('follower_id', $userId)
+                    ->whereIn('following_id', function($q) use ($userId) {
                         $q->select('follower_id')
                           ->from('followers')
-                          ->where('following_id', $authId);
+                          ->where('following_id', $userId);
                     });
             })
             ->paginate(20)
-            ->through(fn($u) => $this->formatUser($u));
+            ->through(fn($u) => $this->formatUser($u, $authId));
     }
 
-    //audiências diplomáricas
-    public function followers(User $user)
-    {
-        return $user->followers()
-            ->with('follower')
-            ->paginate(20)
-            ->through(fn($u) => $this->formatUser($u));
-    }
-
-    //contatos diplomáticos
-    public function following(User $user)
-    {
-        return $user->following()
-            ->paginate(20)
-            ->through(fn($u) => $this->formatUser($u));
-    }    
-
-    private function formatUser($user)
+    private function formatUser(User $user, int $authId)
     {
         return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'username' => $user->username,
-            'foto' => $user->foto ? asset('storage/' . $user->foto) : '/fotos_usuarios/foto.png',
+            'id'           => $user->id,
+            'name'         => $user->name,
+            'username'     => $user->username,
+            'foto'         => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'is_following' => Follower::where('follower_id', $authId)
+                                ->where('following_id', $user->id)
+                                ->exists(),
         ];
     }
 }

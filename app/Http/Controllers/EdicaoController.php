@@ -40,7 +40,7 @@ class EdicaoController extends Controller
                 ];
             });
 
-        return Inertia::render('Edicao/Index', [
+        return Inertia::render('Edicao', [
             'mun' => [
                 'username' => $user->username,
                 'name' => $user->name,
@@ -69,7 +69,6 @@ class EdicaoController extends Controller
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'numero'     => 'required|string|max:50',
-            'ano'        => 'required|integer',
             'dt_inicio'  => 'required|date',
             'dt_termino' => 'required|date|after_or_equal:dt_inicio',
         ]);
@@ -78,7 +77,7 @@ class EdicaoController extends Controller
             'user_id'    => auth()->id(),
             'name'       => $validated['name'],
             'numero'     => $validated['numero'],
-            'ano'        => $validated['ano'],
+            'ano' => \Carbon\Carbon::parse($validated['dt_inicio'])->year,
             'dt_inicio'  => $validated['dt_inicio'],
             'dt_termino' => $validated['dt_termino'],
         ]);
@@ -93,8 +92,8 @@ class EdicaoController extends Controller
     {
         $edicao = Edicao::with([
             'secretariado.user:id,username,foto',
-            'comites'                                 
-        ])->where('user_id', auth()->id())->findOrFail($id);
+            'comites'
+        ])->findOrFail($id);
 
         $formattedEdicao = [
             'id' => $edicao->id,
@@ -105,9 +104,7 @@ class EdicaoController extends Controller
             'secretariado' => $edicao->secretariado->map(fn($membro) => [
                 'cargo' => $membro->cargo,
                 'username' => $membro->user->username,
-                'foto' => $membro->user->foto 
-                    ? asset('storage/' . $membro->user->foto) 
-                    : '/fotos_usuarios/foto.png',
+                'foto' => $membro->user->foto ? asset('storage/' . $membro->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
             ]),
 
             'comites' => $edicao->comites->map(fn($comite) => [
@@ -117,7 +114,17 @@ class EdicaoController extends Controller
         ];
 
         return Inertia::render('Edicao/Show', [
-            'edicao' => $formattedEdicao
+            'edicao' => $formattedEdicao,
+            'edicoes' => Edicao::where('user_id', $edicao->user_id)
+                ->latest()
+                ->get()
+                ->map(fn($e) => [
+                    'id'         => $e->id,
+                    'name'       => $e->name,
+                    'dt_inicio'  => $e->dt_inicio ? \Carbon\Carbon::parse($e->dt_inicio)->format('d/m/Y') : null,
+                    'dt_termino' => $e->dt_termino ? \Carbon\Carbon::parse($e->dt_termino)->format('d/m/Y') : null,
+                ]),
+            'can_manage' => auth()->check() && (auth()->id() === $edicao->user_id)
         ]);
     }
 
@@ -137,24 +144,39 @@ class EdicaoController extends Controller
 
         return Inertia::render('Edicao/Edit', [
             'edicao' => [
-                'id' => $edicao->id,
-                'name' => $edicao->name,
-                'numero' => $edicao->numero,
-                'ano' => $edicao->ano,
-                'dt_inicio' => $edicao->dt_inicio, // Formato Y-m-d para o input date
+                'id'         => $edicao->id,
+                'name'       => $edicao->name,
+                'numero'     => $edicao->numero,
+                'ano'        => $edicao->ano,
+                'dt_inicio'  => $edicao->dt_inicio,
                 'dt_termino' => $edicao->dt_termino,
                 'secretariado' => $edicao->secretariado->map(fn($s) => [
-                    'id' => $s->id,
-                    'user_id' => $s->user_id,
-                    'cargo' => $s->cargo,
+                    'id'         => $s->id,
+                    'user_id'    => $s->user_id,
+                    'cargo'      => $s->cargo,
                     'user_username' => $s->user->username,
-                    'user_foto' => $s->user->foto ? asset('storage/'.$s->user->foto) : '/fotos_usuarios/foto.png'
+                    'user_foto'  => $s->user->foto
+                        ? asset('storage/' . $s->user->foto)
+                        : asset('storage/fotos_usuarios/foto.jpg'),
                 ]),
-                'comites' => $edicao->comites->map(fn($c) => [
-                    'id' => $c->id,
+                'comites' => $edicao->comites->map(fn($c) => [  // ← dentro de 'edicao'
+                    'id'   => $c->id,
                     'name' => $c->name,
                 ]),
-            ]
+            ],  // ← fecha 'edicao'
+            'edicoes' => Edicao::where('user_id', $edicao->user_id)
+                ->latest()
+                ->get()
+                ->map(fn($e) => [
+                    'id'         => $e->id,
+                    'name'       => $e->name,
+                    'dt_inicio'  => $e->dt_inicio
+                        ? \Carbon\Carbon::parse($e->dt_inicio)->format('d/m/Y')
+                        : null,
+                    'dt_termino' => $e->dt_termino
+                        ? \Carbon\Carbon::parse($e->dt_termino)->format('d/m/Y')
+                        : null,
+                ]),
         ]);
     }
 
@@ -167,8 +189,6 @@ class EdicaoController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string',
-            'numero' => 'required|string',
-            'ano' => 'required|integer',
             'dt_inicio' => 'required|date',
             'dt_termino' => 'required|date',
             

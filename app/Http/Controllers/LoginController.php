@@ -31,7 +31,7 @@ class LoginController extends Controller
             return redirect()->intended('feed');
         } else {
             return back()->withErrors([
-                'username' => 'As credenciais fornecidas não correspondem aos nossos registros.',
+                'username' => 'Username ou senha incorretos.',
             ])->onlyInput('username');
         }
     }

@@ -21,10 +21,9 @@ class AwardController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //cadastro formulário
-        return Inertia::render('Award/Create');
+        return Inertia::render('Award/Create', ['tipo' => (int) $request->tipo]);
     }
 
     /**
@@ -37,6 +36,7 @@ class AwardController extends Controller
             'mun' => 'nullable|string|max:100',
             'comite' => 'required|string|max:100',
             'delegation' => 'required|string|max:100',
+            'name' => 'required|string|max:100',
             'username' => 'nullable|exists:users,username',
         ]);
 
@@ -46,6 +46,7 @@ class AwardController extends Controller
             'tipo' => $request->tipo,
             'comite' => $request->comite,
             'delegation' => $request->delegation,
+            'name' => $request->name,
         ];
 
         if ($user->isMun()) {
@@ -57,7 +58,7 @@ class AwardController extends Controller
         }
 
         Award::create($awardData);
-        return redirect()->route('feed');
+        return redirect()->route('profile.show', ['username' => $user->username]);
     }
 
     /**

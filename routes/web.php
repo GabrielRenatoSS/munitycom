@@ -4,8 +4,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\AwardController;
 use App\Http\Controllers\FollowerController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\EdicaoController;
 use App\Http\Controllers\MembroComiteController;
 use App\Http\Controllers\SpottedController;
@@ -18,6 +18,7 @@ use App\Http\Controllers\InterestController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -25,8 +26,11 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'authenticate']);
+    Route::get('/login', function () {
+        return Inertia::render('Auth/Login');
+    })->name('login');
+
+    Route::post('/login', [LoginController::class, 'auth'])->name('login.auth');
     
     Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('forgot-password.show');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('forgot-password.send');
@@ -34,6 +38,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/verify-code', [ResetPasswordController::class, 'verifyCode'])->name('verify-code.verify');
     Route::get('/reset-password', [ResetPasswordController::class, 'showReset'])->name('reset-password.show');
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('reset-password.reset');
+
+    Route::get('/register', [UserController::class, 'create'])->name('register');
+    Route::post('/register', [UserController::class, 'store'])->name('register.store');
 });
 
 Route::middleware('auth')->group(function () {
@@ -46,8 +53,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile/{username}', [UserController::class, 'show'])->name('profile.show');
     Route::delete('/profile', [UserController::class, 'destroy'])->name('profile.destroy');
+
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}', [UserController::class, 'update'])->name('users.update.post');
     
     Route::get('/discover/muns', [UserController::class, 'discoverMuns'])->name('users.discover');
+    Route::get('/discover', [UserController::class, 'discoverPage'])->name('discover');
+
+    Route::get('/profile/{username}/posts', [UserController::class, 'posts'])->name('profile.posts');
 
     Route::resource('publications', PublicationController::class);
     Route::resource('awards', AwardController::class);
@@ -59,7 +72,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
 
-    Route::post('/posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
+    Route::post('/posts/{publication}/like', [LikeController::class, 'toggle'])->name('posts.like');
     
     Route::get('/edicoes/create', [EdicaoController::class, 'create'])->name('edicoes.create');
     Route::post('/edicoes', [EdicaoController::class, 'store'])->name('edicoes.store');

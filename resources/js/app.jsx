@@ -9,6 +9,7 @@ createInertiaApp({
         return pages[`./Pages/${name}.jsx`].default;
     },
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />);
+        const root = document.getElementById('app');
+        createRoot(root).render(<App {...props} />);
     },
 });

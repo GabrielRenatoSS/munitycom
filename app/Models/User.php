@@ -70,7 +70,8 @@ class User extends Authenticatable
     }
 
     public function interests() {
-        return $this->belongsToMany(User::class, 'interests', 'delegate_id', 'mun_id');
+        return $this->belongsToMany(User::class, 'interests', 'delegate_id', 'mun_id')
+               ->withTimestamps();
     }
 
     public function likedPosts() {
@@ -108,5 +109,10 @@ class User extends Authenticatable
     public function favoritos()
     {
         return $this->hasMany(Favorito::class);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'username';
     }
 }

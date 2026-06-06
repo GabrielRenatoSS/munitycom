@@ -36,6 +36,6 @@ class LikeController extends Controller
             }
         }
 
-        return back();
+        return response()->json(['liked' => !isset($like)]);
     } 
 }

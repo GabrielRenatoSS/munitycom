@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->integer('tipo');
             $table->string('conteudo');
-            $table->foreign_id('comite_id')->constrained('comites')->onDelete('cascade');
+            $table->foreignId('comite_id')->constrained('comites')->onDelete('cascade');
             $table->string('brasao')->nullable();
             $table->string('foto1')->nullable();
             $table->string('foto2')->nullable();

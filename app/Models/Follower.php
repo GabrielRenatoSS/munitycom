@@ -18,4 +18,14 @@ class Follower extends Model
     {
         return $this->hasOne(Notificacao::class);
     }
+
+    public function following()
+    {
+        return $this->belongsTo(User::class, 'following_id');
+    }
+
+    public function follower()
+    {
+        return $this->belongsTo(User::class, 'follower_id');
+    }
 }

@@ -103,7 +103,7 @@ class UserController extends Controller
 
         if ($user->tipo === 0) {
 
-            $postsQuery = Publication::with('images')
+            $postsQuery = Publication::with(['images', 'user'])
                 ->where('user_id', $user->id)
                 ->when($request->has('type'), function ($q) use ($request) {
                     if (is_numeric($request->type) && $request->type >= 0 && $request->type <= 5) {
@@ -140,16 +140,19 @@ class UserController extends Controller
                         'fixo'              => $post->fixo,
                         'likes_count'       => $post->likes_count,
                         'comentarios_count' => $post->comentarios_count,
+                        'is_liked'          => (bool) $post->is_liked,
+                        'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                        'name'       => $post->user->name,
+                        'username'   => $post->user->username,
+                        'created_at' => $post->created_at->format('d/m/Y'),
                     ], fn($v) => !is_null($v));
                 });
 
             $awards = Award::with(['user', 'creator'])
                 ->where('user_id', $user->id)
-                ->when($request->has('type'), function ($q) use ($request) {
-                    if ($request->type == 6) {
-                        return $q;
-                    }
-                    return $q->where('id', 0);
+                ->where(function ($q) use ($request) {
+                    if ($request->type == 6) return;
+                    $q->where('id', 0);
                 })
                 ->latest()
                 ->paginate(10, ['*'], 'awards_page')
@@ -159,8 +162,10 @@ class UserController extends Controller
                         'id'         => $award->id,
                         'name'       => $award->name,
                         'tipo'       => 6,
-                        'mun_name'   => $award->mun_id ? $award->creator?->name : $award->mun,
+                        'mun'          => $award->mun_id ? $award->creator?->name : $award->mun,
                         'delegation' => $award->delegation,
+                        'user_username' => $award->user->name,
+                        'user_foto' => $award->user->foto ? asset('storage/' . $award->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
                         'comite'     => $award->comite,
                         'can_edit'   => $authId && ($authId === $award->user_id || ($award->mun_id && $authId === $award->mun_id)),
                     ];
@@ -218,7 +223,7 @@ class UserController extends Controller
                     'id'       => $mun->id,
                     'name'     => $mun->name,
                     'username' => $mun->username,
-                    'foto'     => $mun->foto ? asset('storage/' . $mun->foto) : '/fotos_usuarios/foto.jpg',
+                    'foto' => $mun->foto ? asset('storage/' . $mun->foto) : asset('storage/fotos_usuarios/foto.jpg'),
                 ]);
 
             return Inertia::render('User/Show', [
@@ -227,8 +232,12 @@ class UserController extends Controller
                     'name'         => $user->name,
                     'username'     => $user->username,
                     'tipo'         => $user->tipo,
-                    'foto'         => $user->foto ? Storage::url($user->foto) : '/fotos_usuarios/foto.jpg',
-                    'ft_perfil'    => $user->ft_perfil ? Storage::url($user->ft_perfil) : '/fotos_perfis/foto-perfil.png',
+                    'foto'      => $user->foto 
+                        ? asset('storage/' . $user->foto) 
+                        : asset('storage/fotos_usuarios/foto.jpg'),
+                    'ft_perfil' => $user->ft_perfil 
+                        ? asset('storage/' . $user->ft_perfil) 
+                        : asset('storage/fotos_perfis/foto-perfil.png'),
                     'progresso'    => $user->progresso,
                     'seguindo'     => $seguindo,
                     'seguidores'   => $seguidores,
@@ -273,7 +282,7 @@ class UserController extends Controller
         $documents = null;
 
         if (!$comiteId) {
-            $postsQuery = Publication::with('images')
+            $postsQuery = Publication::with(['images', 'user'])
                 ->where('user_id', $user->id)
                 ->when($edicaoId, function ($q) use ($edicaoId, $user) {
                     $ano = Edicao::where('id', $edicaoId)
@@ -315,9 +324,30 @@ class UserController extends Controller
                         'fixo'              => $post->fixo,
                         'likes_count'       => $post->likes_count,
                         'comentarios_count' => $post->comentarios_count,
+                        'is_liked' => (bool) $post->is_liked,
+                        'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                        'name'       => $post->user->name,
+                        'username'   => $post->user->username,
+                        'created_at' => $post->created_at->format('d/m/Y'),
                     ], fn($v) => !is_null($v));
                 });
         } else {
+            $comiteModel = \App\Models\Comite::find($comiteId);
+
+            $membros = $comiteModel
+                ? $comiteModel->membros()
+                    ->with('user:id,username,foto')
+                    ->get()
+                    ->map(fn($m) => [
+                        'id'        => $m->id,
+                        'delegacao' => $m->delegacao,
+                        'username'  => $m->user->username,
+                        'foto'      => $m->user->foto
+                            ? asset('storage/' . $m->user->foto)
+                            : asset('storage/fotos_usuarios/foto.jpg'),
+                    ])
+                : collect();
+
             $documents = Documento::with([
                     'patrocinadores.delegado:id,user_id,delegacao',
                     'signatarios.delegado:id,delegacao',
@@ -364,8 +394,12 @@ class UserController extends Controller
                 'name'         => $user->name,
                 'username'     => $user->username,
                 'tipo'         => $user->tipo,
-                'foto'         => $user->foto ? Storage::url($user->foto) : '/fotos_usuarios/foto.jpg',
-                'ft_perfil'    => $user->ft_perfil ? Storage::url($user->ft_perfil) : '/fotos_perfis/foto-perfil.png',
+                'foto'      => $user->foto 
+                    ? asset('storage/' . $user->foto) 
+                    : asset('storage/fotos_usuarios/foto.jpg'),
+                'ft_perfil' => $user->ft_perfil 
+                    ? asset('storage/' . $user->ft_perfil) 
+                    : asset('storage/fotos_perfis/foto-perfil.png'),
                 'progresso'    => $user->progresso,
                 'seguindo'     => $seguindo,
                 'seguidores'   => $seguidores,
@@ -376,7 +410,16 @@ class UserController extends Controller
             'documents'      => $documents,
             'spotteds'       => null,
             'edicoes'        => $edicoes,
-            'filters'        => $request->only(['edicao_id', 'comite_id']),
+            'membros'        => $membros ?? null,
+            'comite'         => isset($comiteModel) && $comiteModel ? [
+                'id'   => $comiteModel->id,
+                'name' => $comiteModel->name,
+            ] : null,
+            'can_edit'       => $isOwnProfile,
+            'filters' => array_merge(
+                $request->only(['edicao_id', 'comite_id']),
+                $request->only('type')
+            ),
             'is_own_profile' => $isOwnProfile,
         ]);
     }
@@ -436,7 +479,7 @@ class UserController extends Controller
 
         $user->save();
         
-        return redirect()->route('user.show', $user->username);
+        return redirect()->route('profile.show', $user->username);
     }
 
     /**
@@ -454,6 +497,10 @@ class UserController extends Controller
 
     public function search(Request $request)
     {
+        if (!$request->expectsJson()) {
+            return redirect('/feed');
+        }
+
         $term = $request->query('q');
         $auth = auth()->user();
         $authUserId = $auth->id;
@@ -463,7 +510,7 @@ class UserController extends Controller
                 $query->where('name', 'LIKE', "%{$term}%")
                     ->orWhere('username', 'LIKE', "%{$term}%");
             })
-            ->select(['id', 'name', 'username', 'foto'])
+            ->select(['id', 'name', 'username', 'foto', 'tipo'])
             ->withExists(['followers as is_following' => function ($query) use ($authUserId) {
                 $query->where('follower_id', $authUserId);
             }])
@@ -472,17 +519,17 @@ class UserController extends Controller
             }])
             ->limit(10)
             ->get()
-            ->map(function ($user) {
+            ->map(function ($user) use ($auth) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'username' => $user->username,
                     'foto' => $user->foto 
                         ? asset('storage/' . $user->foto) 
-                        : '/fotos_usuarios/foto.jpg',
+                        : asset('storage/fotos_usuarios/foto.jpg'),
                     'is_following' => $user->is_following,
                     'is_interested' => ($auth->tipo === 0 && $user->tipo === 1)
-                        ? $user->is_interested 
+                        ? (bool) $user->is_interested
                         : null,
                 ];
             });
@@ -507,18 +554,27 @@ class UserController extends Controller
             ->inRandomOrder()
             ->limit(10)
             ->get()
-            ->map(function ($mun) {
+            ->map(function ($mun) use ($user) {
                 return [
-                    'id' => $mun->id,
-                    'name' => $mun->name,
-                    'username' => $mun->username,
-                    'foto' => $mun->foto ? asset('storage/' . $mun->foto) : '/fotos_usuarios/foto.png',
-                    'cidade' => $mun->cidade,
-                    'is_following' => false, // Por definição da query, ele não segue nenhum destes
+                    'id'           => $mun->id,
+                    'name'         => $mun->name,
+                    'username'     => $mun->username,
+                    'foto' => $mun->foto ? asset('storage/' . $mun->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                    'cidade'       => $mun->cidade,
+                    'is_following' => false,
+                    'is_interested' => DB::table('interests')
+                        ->where('delegate_id', $user->id)
+                        ->where('mun_id', $mun->id)
+                        ->exists(),
                 ];
             });
 
         return response()->json($muns);
+    }
+
+    public function discoverPage()
+    {
+        return Inertia::render('DiscoverMuns');
     }
 
     public function toggleBloqueio(User $user)

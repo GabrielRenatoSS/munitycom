@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('patrocinadors', function (Blueprint $table) {
             $table->id();
-            $table->foreign_id('delegado_id')->constrained('membro_comites')->onDelete('cascade');
-            $table->foreign_id('documento_id')->constrained('documentos')->onDelete('cascade');
+            $table->foreignId('delegado_id')->constrained('membro_comites')->onDelete('cascade');
+            $table->foreignId('documento_id')->constrained('documentos')->onDelete('cascade');
             $table->timestamps();
         });
     }

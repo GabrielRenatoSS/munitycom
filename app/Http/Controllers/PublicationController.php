@@ -27,7 +27,9 @@ class PublicationController extends Controller
 
         return Publication::query()
             ->when($request->type === 'following' && $user, function ($query) use ($user) {
-                $query->whereIn('user_id', $user->followings()->pluck('related_id'));
+                $query->whereIn('user_id', 
+                    \App\Models\Follower::where('follower_id', $user->id)->pluck('following_id')
+                );
             })
             ->with(['user', 'images'])
             ->withCount(['likes', 'comentarios'])
@@ -45,9 +47,10 @@ class PublicationController extends Controller
                     'images' => $post->images->map(fn($img) => asset('storage/' . $img->path)),
                     
                     'username' => $post->user->username,
-                    'user_foto' => $post->user->foto 
-                        ? asset('storage/' . $post->user->foto) 
-                        : '/fotos_usuarios/foto.png',
+                    'name' => $post->user->name,
+                    'user_foto' => $post->user->foto
+                        ? asset('storage/' . $post->user->foto)
+                        : asset('storage/fotos_usuarios/foto.jpg'),
                     
                     'likes_count'      => $post->likes_count,
                     'comentarios_count' => $post->comentarios_count,
@@ -55,6 +58,10 @@ class PublicationController extends Controller
 
                     'can_edit' => $authId === $post->user_id, 
                     'can_fav' => $canFav,
+                    'mun'        => $post->mun,
+                    'comite'     => $post->comite,
+                    'delegation' => $post->delegation,
+                    'created_at' => $post->created_at->format('d/m/Y'),
                 ], fn($v) => !is_null($v));
             });
     }
@@ -62,10 +69,11 @@ class PublicationController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //cadastro formulário
-        return Inertia::render('Publication/Create');
+        return Inertia::render('Publication/Create', [
+            'type' => (int) $request->query('type'),
+        ]);
     }
 
     /**
@@ -80,7 +88,7 @@ class PublicationController extends Controller
             'delegation'  => 'nullable|string|max:100',
             'descricao'   => 'nullable|string|max:2000',
             'video_file'  => 'nullable|mimes:mp4,mov,ogg,qt|max:20480',
-            'fixo'        => 'required|boolean',
+            'fixo'        => 'boolean',
             'images.*'    => 'nullable|image|max:5120',
             'images'      => 'max:10',
         ]);
@@ -109,7 +117,7 @@ class PublicationController extends Controller
             'comite'     => $request->comite,
             'delegation' => $request->delegation,
             'descricao'  => $request->descricao,
-            'fixo'       => $request->fixo ?? false,
+            'fixo' => $request->fixo ?? false,
             'video'      => null,
         ]);
 
@@ -128,7 +136,7 @@ class PublicationController extends Controller
             }
         }
 
-        return back();
+        return redirect()->route('feed');
     }
 
     /**
@@ -160,8 +168,9 @@ class PublicationController extends Controller
                     'texto'      => $comentario->texto,
                     'username'   => $comentario->user->username,
                     'user_foto'  => $comentario->user->foto
-                        ? asset('storage/' . $comentario->user->foto)
-                        : '/fotos_usuarios/foto.jpg',
+                        ? asset('storage/' . $post->user->foto)
+                        : asset('storage/fotos_usuarios/foto.jpg'),
+                    'name' => $post->user->name,
                     'created_at' => $comentario->created_at->format('d/m/Y H:i'),
                     'can_edit'   => $ehAutor && $dentroDoTempo,
                     'can_delete' => $ehAutor || $ehDonoDaPublicacao,
@@ -182,15 +191,16 @@ class PublicationController extends Controller
             'descricao'   => $post->descricao,
             'video'       => $post->video ? asset('storage/' . $post->video) : null,
             'username'    => $post->user->username,
-            'user_foto'   => $post->user->foto
+            'user_foto' => $post->user->foto
                 ? asset('storage/' . $post->user->foto)
-                : '/fotos_usuarios/foto.jpg',
+                : asset('storage/fotos_usuarios/foto.jpg'),
             'images'      => $post->images->isNotEmpty()
                 ? $post->images->map(fn($img) => asset('storage/' . $img->path))
                 : null,
             'likes_count' => $post->likes_count,
             'is_liked'    => $post->is_liked,
             'can_edit'    => $authId && $authId === $post->user_id,
+            'created_at' => $post->created_at->format('d/m/Y')
         ], fn($value) => !is_null($value));
 
         return Inertia::render('Publication/Show', [

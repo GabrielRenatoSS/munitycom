@@ -16,9 +16,9 @@ return new class extends Migration
             $table->boolean('tipo'); //0 é publico, 1 é privado
             $table->boolean('anonimo'); //0 é normal, 1 é anônimo
             $table->string('mensagem');
-            $table->foreign_id('remetente_id')->constrained('membro_comites')->onDelete('cascade');
-            $table->foreign_id('destinatario_id')->constrained('membro_comites')->onDelete('cascade');
-            $table->foreign_id('comite_id')->constrained('comites')->onDelete('cascade');
+            $table->foreignId('remetente_id')->constrained('membro_comites')->onDelete('cascade');
+            $table->foreignId('destinatario_id')->constrained('membro_comites')->onDelete('cascade');
+            $table->foreignId('comite_id')->constrained('comites')->onDelete('cascade');
             $table->timestamps();
         });
     }
