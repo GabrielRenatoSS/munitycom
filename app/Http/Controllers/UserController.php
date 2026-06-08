@@ -173,11 +173,13 @@ class UserController extends Controller
 
             $spotteds = null;
 
-            if ($request->input('type') == 6) {
+            if ($request->input('type') == 7) {
                 $spottedQuery = Spotted::with([
-                        'remetente:id,delegacao',
-                        'destinatario:id,delegacao',
+                        'destinatario:id,delegacao,user_id',
                         'comite:id,name',
+                        'remetente:id,delegacao,user_id',
+                        'remetente.user:id,username',
+                        'destinatario.user:id,username',
                     ])
                     ->where('destinatario_id', function ($q) use ($user) {
                         $q->select('id')
@@ -209,8 +211,12 @@ class UserController extends Controller
                             'tipo'         => $spotted->tipo,
                             'anonimo'      => $spotted->anonimo,
                             'comite'       => $spotted->comite?->name,
-                            'remetente'    => $spotted->anonimo ? null : $spotted->remetente?->delegacao,
+                            'remetente'    => $spotted->anonimo ? "Anônimo" : $spotted->remetente?->delegacao,
                             'destinatario' => $spotted->destinatario?->delegacao,
+                            'remetente_foto'     => $spotted->anonimo ? asset('storage/fotos_usuarios/foto.jpg') : ($spotted->remetente?->user?->foto ? asset('storage/' . $spotted->remetente->user->foto) : asset('storage/fotos_usuarios/foto.jpg')),
+                            'remetente_username' => $spotted->anonimo ? "Anônimo" : $spotted->remetente?->user?->username,
+                            'destinatario_username' => $spotted->destinatario?->user?->username,
+                            'card_type' => 'spotted',
                         ];
                     });
             }
@@ -350,6 +356,7 @@ class UserController extends Controller
 
             $documents = Documento::with([
                     'patrocinadores.delegado:id,user_id,delegacao',
+                    'patrocinadores.delegado.user:id,username,foto',  // ← adicionar
                     'signatarios.delegado:id,delegacao',
                 ])
                 ->where('comite_id', $comiteId)
@@ -358,6 +365,8 @@ class UserController extends Controller
                 ->withQueryString()
                 ->through(function ($documento) use ($authId, $user) {
 
+                    $primeiroPatr = $documento->patrocinadores->first()?->delegado;
+
                     $ehPatrocinador = $documento->patrocinadores
                         ->contains(fn($p) => $p->delegado?->user_id === $authId);
 
@@ -365,7 +374,7 @@ class UserController extends Controller
 
                     $ehChairOuMesa = MembroComite::where('user_id', $authId)
                         ->where('comite_id', $documento->comite_id)
-                        ->whereRaw('LOWER(delegacao) IN (?)', [['chair', 'mesa', 'mesa diretora']])
+                        ->whereIn(\DB::raw('LOWER(delegacao)'), ['chair', 'mesa', 'mesa diretora'])
                         ->exists();
 
                     return [
@@ -384,6 +393,11 @@ class UserController extends Controller
                             ? $documento->signatarios->map(fn($s) => $s->delegado?->delegacao)
                             : null,
                         'is_own_document' => $authId && ($ehPatrocinador || $ehMun || $ehChairOuMesa),
+                        'autor_foto'      => $primeiroPatr?->user?->foto
+                            ? asset('storage/' . $primeiroPatr->user->foto)
+                            : asset('storage/fotos_usuarios/foto.jpg'),
+                        'autor_username'  => $primeiroPatr?->user?->username,
+                        'autor_delegacao' => $primeiroPatr?->delegacao,
                     ];
                 });
         }

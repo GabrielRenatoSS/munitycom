@@ -11,6 +11,8 @@ import FiltroPosts from "../../components/FiltroPosts";
 import BarraPublications from "../../components/BarraPublications";
 import FiltroMun from "../../components/FiltroMun";
 import MembrosComite from "../../components/MembrosComite";
+import BarraDocumentos from "../../components/BarraDocumentos";
+import ListaDocumentos from "../../components/ListaDocumentos";
 
 const BTN_MEMBROS = {
   background: "#c3a5ff",
@@ -25,6 +27,16 @@ const BTN_MEMBROS = {
   whiteSpace: "nowrap",
 };
 
+// Proporções das 3 colunas
+// Margens laterais: 0.94% cada lado
+// Colunas: 25.1% | 44.48% | 25.1%
+// Gaps entre colunas: (100% - 0.94%*2 - 25.1%*2 - 44.48%) / 2 = 2.22%
+const COL_GAP   = "2.22%";
+const COL_LEFT  = "25.1%";
+const COL_MID   = "44.48%";
+const COL_RIGHT = "25.1%";
+const SIDE_PAD  = "0.94%";
+
 export default function Show() {
   const { user, is_own_profile, interests, filters = {}, membros, can_edit, comite } = usePage().props;
   const [showPublications, setShowPublications] = useState(false);
@@ -32,6 +44,9 @@ export default function Show() {
   const isMun          = user.tipo === 1;
   const comiteFiltrado = !!filters.comite_id;
   const GAP = "2.25%";
+
+  // Mostra o grid de 3 colunas quando: perfil mun + comitê selecionado + membros disponíveis
+  const showThreeColumns = isMun && comiteFiltrado && membros;
 
   return (
     <>
@@ -77,8 +92,8 @@ export default function Show() {
             </div>
           </div>
 
-          {/* Botão membros do comitê — desktop */}
-          {isMun && comiteFiltrado && membros && (
+          {/* ── Botão membros do comitê — desktop ── */}
+          {showThreeColumns && (
             <div style={{ marginTop: "1.5rem", marginBottom: "0.5rem" }}>
               <button style={BTN_MEMBROS} onClick={() => setShowMembros(true)}>
                 MEMBROS DO COMITÊ
@@ -86,9 +101,64 @@ export default function Show() {
             </div>
           )}
 
-          <div style={{ width: "50%", margin: "1.5rem auto 0" }}>
+          {/* ── Grid de 3 colunas scrolláveis (mun + comitê selecionado) ── */}
+          {showThreeColumns && (
+            <div
+              style={{
+                display: "flex",
+                gap: COL_GAP,
+                // sem padding: o pai (overflowY: auto) já tem padding: "1rem 0.94% 2rem"
+                marginTop: "1rem",
+                height: "calc(100vh - 8.15vh - 1rem - 2rem - 2.5rem)",
+                boxSizing: "border-box",
+                alignItems: "flex-start", // colunas crescem pelo conteúdo, não pela altura do flex
+              }}
+            >
+              {/* Coluna esquerda — 25.1% */}
+              <div
+                style={{
+                  width: COL_LEFT,
+                  flexShrink: 0,
+                  overflowY: "auto",
+                  borderRadius: "16px",
+                  // sem height: 100% — cresce pelo conteúdo do BarraDocumentos
+                }}
+              >
+                <BarraDocumentos comiteId={filters.comite_id ? Number(filters.comite_id) : null} />
+              </div>
+
+              {/* Coluna central — 44.48% */}
+              <div
+                style={{
+                  width: COL_MID,
+                  flexShrink: 0,
+                  overflowY: "auto",
+                  borderRadius: "16px",
+                }}
+              >
+                <ListaDocumentos />
+              </div>
+
+              {/* Coluna direita — 25.1% */}
+              <div
+                style={{
+                  width: COL_RIGHT,
+                  flexShrink: 0,
+                  overflowY: "auto",
+                  borderRadius: "16px",
+                }}
+              >
+                {/* conteúdo futuro */}
+              </div>
+            </div>
+          )}
+
+          {/* FiltroPosts — só aparece quando NÃO está no modo 3 colunas */}
+          {!showThreeColumns && (
+            <div style={{ width: "50%", margin: "1.5rem auto 0" }}>
               <FiltroPosts username={user.username} showFilters={!isMun} />
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -138,9 +208,24 @@ export default function Show() {
               </div>
             )}
 
-            <div style={{ marginBottom: "0.6rem" }}>
-              <FiltroPosts username={user.username} showFilters={!isMun} />
-            </div>
+            {/* Colunas mobile — só aparece quando mun + comitê selecionado + membros */}
+            {isMun && comiteFiltrado && membros ? (
+              <div style={{ marginBottom: "0.6rem" }}>
+                {/* Coluna 1 — BarraDocumentos — 70% da largura, centralizado */}
+                <div style={{ width: "62%", margin: "0 auto 0.6rem" }}>
+                <BarraDocumentos mobile comiteId={filters.comite_id ? Number(filters.comite_id) : null} />
+                </div>
+
+                {/* Coluna 2 — ListaDocumentos — largura total */}
+                <div style={{ width: "100%" }}>
+                  <ListaDocumentos />
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: "0.6rem" }}>
+                <FiltroPosts username={user.username} showFilters={!isMun} />
+              </div>
+            )}
 
           </div>
         )}

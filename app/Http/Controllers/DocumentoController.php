@@ -8,15 +8,32 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\MembroComite;
 use App\Models\Patrocinador;
 use App\Models\Signatario;
+use App\Models\Comite;
+use App\Models\Edicao;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DocumentoController extends Controller
 {
 
-    public function create()
+    public function create(Request $request)
     {
-        return Inertia::render('Documento/Create');
+        $comiteId = $request->query('comite_id');
+        $tipo     = (int) $request->query('tipo', 0);
+
+        $membros = MembroComite::with('user')
+            ->where('comite_id', $comiteId)
+            ->get()
+            ->map(fn($m) => [
+                'username'  => $m->user->username,
+                'delegacao' => $m->delegacao,
+            ]);
+
+        return Inertia::render('Documento/Create', [
+            'tipo'      => $tipo,
+            'comite_id' => $comiteId,
+            'membros'   => $membros,
+        ]);
     }
 
     /**
@@ -121,40 +138,77 @@ class DocumentoController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Documento criado!');
+        $comite = Comite::with('edicao.user')->find($documento->comite_id);
+
+        return redirect()->route('profile.show', [
+            'username'   => $comite->edicao->user->username,
+            'comite_id'  => $documento->comite_id,
+            'edicao_id'  => $comite->edicao->id,
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Documento $documento)
+public function show(Documento $documento)
     {
         $documento->load([
-            'patrocinadores.delegado:id,delegacao',
-            'signatarios.delegado:id,delegacao',
+            'patrocinadores.delegado.user',
+            'signatarios.delegado.user',
+            'comite:id,nome',
         ]);
 
         $patrocinadores = $documento->patrocinadores->isNotEmpty()
-            ? $documento->patrocinadores->map(fn($p) => $p->delegado->delegacao)
+            ? $documento->patrocinadores->map(fn($p) => [
+                'delegacao' => $p->delegado->delegacao,
+                'username'  => optional($p->delegado->user)->username,
+                'foto'      => optional($p->delegado->user)->foto
+                                ? Storage::url($p->delegado->user->foto)
+                                : null,
+            ])->values()
             : null;
 
         $signatarios = $documento->signatarios->isNotEmpty()
-            ? $documento->signatarios->map(fn($s) => $s->delegado->delegacao)
+            ? $documento->signatarios->map(fn($s) => [
+                'delegacao' => $s->delegado->delegacao,
+                'username'  => optional($s->delegado->user)->username,
+                'foto'      => optional($s->delegado->user)->foto
+                                ? Storage::url($s->delegado->user->foto)
+                                : null,
+            ])->values()
             : null;
 
-        return Inertia::render('Documentos/Show', [
+        $can_edit = false;
+        if (Auth::check()) {
+            $can_edit = $documento->patrocinadores
+                ->contains(fn($p) => $p->delegado->user_id === Auth::id());
+        }
+
+        $autor_nome = $documento->patrocinadores->isNotEmpty()
+            ? optional($documento->patrocinadores->first()->delegado->user)->name
+            : null;
+
+        $payload = [
             'documento' => [
-                'tipo'          => $documento->tipo,
-                'conteudo'      => $documento->conteudo,
-                'brasao' => $documento->brasao ? Storage::url($documento->brasao) : null,
-                'foto1'  => $documento->foto1  ? Storage::url($documento->foto1)  : null,
-                'foto2'  => $documento->foto2  ? Storage::url($documento->foto2)  : null,
-                'foto3'  => $documento->foto3  ? Storage::url($documento->foto3)  : null,
-                'foto4'  => $documento->foto4  ? Storage::url($documento->foto4)  : null,
+                'tipo'           => $documento->tipo,
+                'conteudo'       => $documento->conteudo,
+                'comite_nome'    => optional($documento->comite)->nome,
+                'autor_nome'     => $autor_nome,
+                'brasao'         => $documento->brasao ? Storage::url($documento->brasao) : null,
+                'foto1'          => $documento->foto1  ? Storage::url($documento->foto1)  : null,
+                'foto2'          => $documento->foto2  ? Storage::url($documento->foto2)  : null,
+                'foto3'          => $documento->foto3  ? Storage::url($documento->foto3)  : null,
+                'foto4'          => $documento->foto4  ? Storage::url($documento->foto4)  : null,
                 'patrocinadores' => $patrocinadores,
-                'signatarios'   => $signatarios,
+                'signatarios'    => $signatarios,
             ],
-        ]);
+            'can_edit' => $can_edit,
+        ];
+
+        // Requisição via fetch (Accept: application/json) → retorna JSON puro
+        if (request()->expectsJson()) {
+            return response()->json($payload);
+        }
+
+        // Requisição Inertia normal → retorna página
+        return Inertia::render('Documentos/Show', $payload);
     }
 
     /**
@@ -162,7 +216,10 @@ class DocumentoController extends Controller
      */
     public function edit(Documento $documento)
     {
-        $this->authorize('update', $documento);
+        $isPatrocinador = $documento->patrocinadores()
+            ->whereHas('delegado', fn($q) => $q->where('user_id', Auth::id()))
+            ->exists();
+        abort_if(!$isPatrocinador, 403);
 
         $documento->load([
             'patrocinadores.delegado:id,delegacao',
@@ -177,7 +234,7 @@ class DocumentoController extends Controller
             ? $documento->signatarios->map(fn($s) => $s->delegado->delegacao)
             : null;
 
-        return Inertia::render('Documentos/Edit', [
+        return Inertia::render('Documento/Edit', [
             'documento' => [
                 'id'            => $documento->id,
                 'tipo'          => $documento->tipo,
@@ -198,7 +255,11 @@ class DocumentoController extends Controller
      */
     public function update(Request $request, Documento $documento)
     {
-        $this->authorize('update', $documento);
+        // autorização manual: só patrocinadores podem editar
+        $isPatrocinador = $documento->patrocinadores()
+            ->whereHas('delegado', fn($q) => $q->where('user_id', Auth::id()))
+            ->exists();
+        abort_if(!$isPatrocinador, 403);
 
         $rules = [
             'conteudo' => 'required|string',
@@ -298,7 +359,10 @@ class DocumentoController extends Controller
      */
     public function destroy(Documento $documento)
     {
-        $this->authorize('delete', $documento);
+        $isPatrocinador = $documento->patrocinadores()
+            ->whereHas('delegado', fn($q) => $q->where('user_id', Auth::id()))
+            ->exists();
+        abort_if(!$isPatrocinador, 403);
 
         if ($documento->brasao) {
             Storage::disk('public')->delete($documento->brasao);
@@ -313,5 +377,71 @@ class DocumentoController extends Controller
         $documento->delete();
 
         return redirect()->back();
+    }
+
+    /**
+     * Retorna o documento como JSON puro (para o popup do frontend).
+     * Rota: GET /documentos/{documento}/json
+     */
+    /**
+     * Retorna o documento como JSON puro (para o popup do frontend).
+     * Rota: GET /documentos/{documento}/json
+     */
+    /**
+     * Retorna o documento como JSON puro (para o popup do frontend).
+     * Rota: GET /documentos/{documento}/json
+     */
+    public function showJson(Documento $documento)
+    {
+        $documento->load([
+            'patrocinadores.delegado.user',
+            'signatarios.delegado.user',
+        ]);
+
+        // Busca o nome do comitê separadamente para não depender
+        // do relacionamento 'comite' estar definido no model
+        $comiteNome = \App\Models\Comite::find($documento->comite_id)?->name;
+
+        $patrocinadores = $documento->patrocinadores->isNotEmpty()
+            ? $documento->patrocinadores->map(fn($p) => [
+                'delegacao' => $p->delegado->delegacao,
+                'username'  => optional($p->delegado->user)->username,
+                'foto' => optional($p->delegado->user)->foto ? Storage::url($p->delegado->user->foto) : Storage::url('fotos_usuarios/foto.jpg'),
+            ])->values()
+            : null;
+
+        $signatarios = $documento->signatarios->isNotEmpty()
+            ? $documento->signatarios->map(fn($s) => [
+                'delegacao' => $s->delegado->delegacao,
+                'username'  => optional($s->delegado->user)->username,
+                'foto' => optional($s->delegado->user)->foto ? Storage::url($s->delegado->user->foto) : Storage::url('fotos_usuarios/foto.jpg'),
+            ])->values()
+            : null;
+
+        $can_edit = false;
+        if (Auth::check()) {
+            $can_edit = $documento->patrocinadores
+                ->contains(fn($p) => optional($p->delegado)->user_id === Auth::id());
+        }
+
+        $primeiroPatrocinador = $documento->patrocinadores->first();
+        $autor_nome = optional(optional(optional($primeiroPatrocinador)->delegado)->user)->name;
+
+        return response()->json([
+            'documento' => [
+                'tipo'           => $documento->tipo,
+                'conteudo'       => $documento->conteudo,
+                'comite_nome'    => $comiteNome,
+                'autor_nome'     => $autor_nome,
+                'brasao'         => $documento->brasao ? Storage::url($documento->brasao) : null,
+                'foto1'          => $documento->foto1  ? Storage::url($documento->foto1)  : null,
+                'foto2'          => $documento->foto2  ? Storage::url($documento->foto2)  : null,
+                'foto3'          => $documento->foto3  ? Storage::url($documento->foto3)  : null,
+                'foto4'          => $documento->foto4  ? Storage::url($documento->foto4)  : null,
+                'patrocinadores' => $patrocinadores,
+                'signatarios'    => $signatarios,
+            ],
+            'can_edit' => $can_edit,
+        ]);
     }
 }

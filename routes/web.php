@@ -93,8 +93,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/friends', [FollowerController::class, 'friends'])->name('users.friends');
     });
 
+    Route::get('/spotteds/create', [SpottedController::class, 'create'])->name('spotteds.create');
     Route::post('/spotteds', [SpottedController::class, 'store'])->name('spotteds.store');
     Route::resource('documentos', DocumentoController::class)->except(['index']);
+    Route::get('/documentos/{documento}/json', [DocumentoController::class, 'showJson'])->name('documentos.json');
+    Route::post('/documentos/{documento}/update', [DocumentoController::class, 'update'])->name('documentos.update.json');
 
     Route::get('/feedback/create', [FeedbackController::class, 'create'])->name('feedback.create');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');

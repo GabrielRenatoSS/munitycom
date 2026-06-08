@@ -6,58 +6,91 @@ use App\Models\Spotted;
 use Illuminate\Http\Request;
 use App\Models\MembroComite;
 use App\Models\Notificacao;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class SpottedController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
         $user = Auth::user();
 
+        $request->validate([
+            'comite_id' => 'required|exists:comites,id',
+        ]);
+
+        $comite = \App\Models\Comite::with('edicao.user')->findOrFail($request->comite_id);
+
         return Inertia::render('Spotted/Create', [
-            'can_anonimo' => $user->progresso >= 4,
+            'can_anonimo'  => $user->progresso >= 4,
+            'comite_id'    => (int) $request->comite_id,
+            'edicao_id'    => (int) $comite->edicao->id,  // busca aqui
+            'mun_username' => $comite->edicao->user->username,
         ]);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $user = Auth::user();
-
+    
         if ($request->anonimo && $user->progresso < 4) {
             abort(403);
         }
-
-        $dados = $request->validate([
-            'tipo'            => 'required|boolean',
-            'mensagem'        => 'required|string|max:255',
-            'destinatario_id' => 'required|exists:membro_comites,id',
-            'comite_id'       => 'required|exists:comites,id',
-            'anonimo'         => 'nullable|boolean',
+    
+        $request->validate([
+            'username_destinatario' => 'required|string|exists:users,username',
+            'mensagem'              => 'required|string|max:255',
+            'tipo'                  => 'required|in:0,1',
+            'comite_id'             => 'required|integer|exists:comites,id',
+            'anonimo'               => 'nullable|in:0,1',
         ]);
-
+    
+        $comite = \App\Models\Comite::with('edicao.user')->findOrFail($request->comite_id);
+    
+        $destinatarioUser = User::where('username', $request->username_destinatario)->firstOrFail();
+    
+        $destinatarioMembro = MembroComite::where('user_id', $destinatarioUser->id)
+            ->where('comite_id', $request->comite_id)
+            ->first();
+    
+        if (!$destinatarioMembro) {
+            return back()->withErrors([
+                'username_destinatario' => 'Este usuário não é membro do comitê selecionado.',
+            ]);
+        }
+    
         $remetente = MembroComite::where('user_id', $user->id)
-            ->where('comite_id', $dados['comite_id'])
-            ->firstOrFail();
-
-        $dados['anonimo']      = $request->boolean('anonimo', false);
-        $dados['remetente_id'] = $remetente->id;
-
-        $spotted = Spotted::create($dados);
-
-        $destinatario = MembroComite::find($dados['destinatario_id']);
-
+            ->where('comite_id', $request->comite_id)
+            ->first();
+    
+        if (!$remetente) {
+            return back()->withErrors([
+                'username_destinatario' => 'Você não é membro deste comitê.',
+            ]);
+        }
+    
+        $spotted = Spotted::create([
+            'tipo'            => $request->tipo,
+            'mensagem'        => $request->mensagem,
+            'destinatario_id' => $destinatarioMembro->id,
+            'comite_id'       => $request->comite_id,
+            'anonimo'         => $request->boolean('anonimo', false),
+            'remetente_id'    => $remetente->id,
+        ]);
+    
         Notificacao::create([
-            'user_id'    => $destinatario->user_id,
+            'user_id'    => $destinatarioUser->id,
             'spotted_id' => $spotted->id,
             'tipo'       => 3,
             'leitura'    => false,
         ]);
-
-        return redirect()->back();
+    
+        return redirect()->route('profile.show', [
+            'username'  => $comite->edicao->user->username,
+            'comite_id' => $spotted->comite_id,
+            'edicao_id' => $comite->edicao->id,
+        ]);
     }
 
     /**

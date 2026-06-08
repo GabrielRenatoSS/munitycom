@@ -9,7 +9,7 @@ const ABAS = [
   { label: "Presenças",  type: 1    },
   { label: "Delegações", type: 2    },
   { label: "Memórias",   type: 3    },
-  { label: "Spotteds",   type: "spotted" },
+  { label: "Spotteds",   type: 7    },
   { label: "Prêmios",    type: 6    },
 ];
 
@@ -17,8 +17,10 @@ const TEXT = {
   fontFamily: "'Glacial Indifference', sans-serif",
 };
 
+//aqui
+
 export default function FiltroPosts({ username, showFilters = true }) {
-  const { posts, awards, filters } = usePage().props;
+  const { posts, awards, spotteds, filters } = usePage().props;
   console.log("posts", posts, "filters", filters);
 
   const activeType = filters?.type !== undefined ? Number(filters.type) : null;
@@ -29,8 +31,9 @@ export default function FiltroPosts({ username, showFilters = true }) {
   }
 
   const postItems = posts?.data ?? [];
-  const awardItems = activeType === 6 ? (awards?.data ?? []) : [];
-  const allItems = [...postItems, ...awardItems];
+  const awardItems   = activeType === 6 ? (awards?.data   ?? []) : [];
+  const spottedItems = activeType === 7 ? (spotteds?.data ?? []) : [];
+  const allItems = [...postItems, ...awardItems, ...spottedItems];
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -84,7 +87,9 @@ export default function FiltroPosts({ username, showFilters = true }) {
           </p>
         ) : (
           allItems.map((item) =>
-            item.tipo === 6 ? (
+            item.card_type === 'spotted' ? (
+              <SpottedCard key={`spotted-${item.id}`} spotted={item} />
+            ) : item.tipo === 6 ? (
               <AwardCard key={`award-${item.id}`} award={item} />
             ) : (
               <PostCard key={`post-${item.id}`} post={item} />
@@ -93,6 +98,37 @@ export default function FiltroPosts({ username, showFilters = true }) {
         )}
       </div>
 
+    </div>
+  );
+}
+
+function SpottedCard({ spotted }) {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "2px solid #8c52ff",
+        borderRadius: "13px",
+        padding: "0.8rem 1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.5rem",
+      }}
+    >
+      <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
+        <img
+          src={spotted.remetente_foto || "/storage/fotos_usuarios/foto.jpg"}
+          alt="foto"
+          style={{ width: "clamp(20px, 7vw, 36px)", height: "clamp(20px, 7vw, 36px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+        />
+        <p style={{ fontFamily: "'Glacial Indifference', sans-serif", fontSize: "clamp(0.72rem, 2.5vw, 0.95rem)", color: "#000", margin: 0 }}>
+          <span>@{spotted.remetente_username} mandou para </span>
+          <span style={{ color: "#8c52ff" }}>{spotted.destinatario}</span>
+          <span> (@{spotted.destinatario_username}):</span>
+          <br />
+          <span>"{spotted.mensagem}"</span>
+        </p>
+      </div>
     </div>
   );
 }
