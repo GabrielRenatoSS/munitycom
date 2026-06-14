@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { PostCard } from "../Pages/Publication/Show";
+import PostPopup from "@/components/PostPopup";
 import axios from 'axios';
 // import Publication from './Publication'; // TODO: criar Publication.jsx
 
@@ -28,6 +29,7 @@ export default function FeedPosts() {
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [feedType, setFeedType] = useState('global'); // 'global' | 'following'
+  const [popupId, setPopupId] = useState(null);
   const loaderRef = useRef(null);
 
   const fetchPosts = useCallback(async (type, cursor = null, replace = false) => {
@@ -110,7 +112,7 @@ export default function FeedPosts() {
           <p style={{ textAlign: "center", color: "#6425d8" }}>Nenhuma publicação ainda.</p>
         ) : (
           posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} onClick={() => setPopupId(post.id)} />
           ))
         )}
 
@@ -120,6 +122,8 @@ export default function FeedPosts() {
           <p style={{ textAlign: "center", color: "#6425d8" }}>Carregando mais...</p>
         )}
       </div>
+
+      {popupId && <PostPopup postId={popupId} onClose={() => setPopupId(null)} />}
 
     </div>
   );

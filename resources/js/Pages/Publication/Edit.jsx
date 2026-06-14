@@ -103,12 +103,21 @@ function FileButton({ label, onChange }) {
   );
 }
 
+function TipoVideo({ data, setData }) {
+  return (
+    <>
+      <Field label="Descrição" name="descricao" value={data.descricao} onChange={setData} />
+    </>
+  );
+}
+
 const TYPE_CONFIG = {
   0: { title: "inscrição", bg: "/images/inscricao-bg.png" },
   1: { title: "delegação", bg: "/images/delegacao-bg.png" },
   2: { title: "presença",  bg: "/images/presenca-bg.png"  },
   3: { title: "memória",   bg: "/images/memoria-bg.png"   },
   4: { title: "post",      bg: "/images/post-bg.png"      },
+  5: { title: "vídeo curto", bg: "/images/video-bg.png"    },
 };
 
 function TipoInscricao({ data, setData }) {
@@ -192,6 +201,7 @@ export default function Edit() {
       case 2: return <TipoPresenca  data={data} setData={setData} />;
       case 3: return <TipoMemoria   data={data} setData={setData} />;
       case 4: return <TipoPost      data={data} setData={setData} />;
+      case 5: return <TipoVideo     data={data} setData={setData} />;
       default: return null;
     }
   }

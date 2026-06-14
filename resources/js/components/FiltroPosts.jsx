@@ -3,16 +3,6 @@ import { router, usePage } from "@inertiajs/react";
 import { PostCard } from "../Pages/Publication/Show";
 import ConfirmPopup from "@/components/ConfirmPopup";
 
-const ABAS = [
-  { label: "Feed",       type: null },
-  { label: "Inscrições", type: 0    },
-  { label: "Presenças",  type: 1    },
-  { label: "Delegações", type: 2    },
-  { label: "Memórias",   type: 3    },
-  { label: "Spotteds",   type: 7    },
-  { label: "Prêmios",    type: 6    },
-];
-
 const TEXT = {
   fontFamily: "'Glacial Indifference', sans-serif",
 };
@@ -20,7 +10,18 @@ const TEXT = {
 //aqui
 
 export default function FiltroPosts({ username, showFilters = true }) {
-  const { posts, awards, spotteds, filters } = usePage().props;
+  const { posts, awards, spotteds, filters, user } = usePage().props;
+
+  const ABAS = [
+    { label: "Feed",         type: null },
+    { label: "Inscrições",   type: 0    },
+    { label: "Presenças",    type: 1    },
+    { label: "Delegações",   type: 2    },
+    { label: "Memórias",     type: 3    },
+    { label: "Spotteds",     type: 7    },
+    { label: "Prêmios",      type: 6    },
+    ...(user?.progresso >= 7 ? [{ label: "Vídeos Curtos", type: 8 }] : []),
+  ];
   console.log("posts", posts, "filters", filters);
 
   const activeType = filters?.type !== undefined ? Number(filters.type) : null;

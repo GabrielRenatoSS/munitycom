@@ -44,7 +44,7 @@ class FeedbackController extends Controller
             'leitura'  => false,
         ]);
 
-        return redirect()->back();
+        return redirect('/feed');
     }
 
     public function toggleLeitura(Feedback $feedback)

@@ -101,18 +101,26 @@ class UserController extends Controller
             ($authUser->tipo === 0 && $authUser->progresso >= 6)
         );
 
+        $canComment = $authUser && (
+            $authUser->tipo == 1 ||
+            ($authUser->progresso >= 3)
+        );
+
         if ($user->tipo === 0) {
 
             $postsQuery = Publication::with(['images', 'user'])
                 ->where('user_id', $user->id)
                 ->when($request->has('type'), function ($q) use ($request) {
-                    if (is_numeric($request->type) && $request->type >= 0 && $request->type <= 5) {
+                    if (is_numeric($request->type) && $request->type >= 0 && $request->type <= 8) {
                         return $q->where('type', $request->type);
                     }
                     return $q->where('id', 0);
                 })
                 ->withCount(['likes', 'comentarios'])
                 ->withExists(['likes as is_liked' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }])
+                ->withExists(['favoritos as is_favoritado' => function ($q) {
                     $q->where('user_id', auth()->id());
                 }]);
 
@@ -124,7 +132,7 @@ class UserController extends Controller
 
             $posts = $postsQuery->paginate(10, ['*'], 'posts_page')
                 ->withQueryString()
-                ->through(function ($post) use ($authId, $canFix, $canFav) {
+                ->through(function ($post) use ($authId, $canFix, $canFav, $canComment) {
                     return array_filter([
                         'id'                => $post->id,
                         'type'              => $post->type,
@@ -137,10 +145,12 @@ class UserController extends Controller
                         'can_edit'          => $authId === $post->user_id,
                         'can_fix'           => $canFix,
                         'can_fav'           => $canFav,
+                        'can_comment'       => $canComment,
                         'fixo'              => $post->fixo,
                         'likes_count'       => $post->likes_count,
                         'comentarios_count' => $post->comentarios_count,
                         'is_liked'          => (bool) $post->is_liked,
+                        'is_favoritado'     => (bool) $post->is_favoritado,
                         'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
                         'name'       => $post->user->name,
                         'username'   => $post->user->username,
@@ -304,6 +314,9 @@ class UserController extends Controller
                 ->withCount(['likes', 'comentarios'])
                 ->withExists(['likes as is_liked' => function ($q) {
                     $q->where('user_id', auth()->id());
+                }])
+                ->withExists(['favoritos as is_favoritado' => function ($q) {
+                    $q->where('user_id', auth()->id());
                 }]);
 
             if (!$edicaoId) {
@@ -314,7 +327,7 @@ class UserController extends Controller
 
             $posts = $postsQuery->paginate(10, ['*'], 'posts_page')
                 ->withQueryString()
-                ->through(function ($post) use ($authId, $canFix, $canFav) {
+                ->through(function ($post) use ($authId, $canFix, $canFav, $canComment) {
                     return array_filter([
                         'id'                => $post->id,
                         'type'              => $post->type,
@@ -327,10 +340,12 @@ class UserController extends Controller
                         'can_edit'          => $authId === $post->user_id,
                         'can_fix'           => $canFix,
                         'can_fav'           => $canFav,
+                        'can_comment'       => $canComment,
                         'fixo'              => $post->fixo,
                         'likes_count'       => $post->likes_count,
                         'comentarios_count' => $post->comentarios_count,
                         'is_liked' => (bool) $post->is_liked,
+                        'is_favoritado' => (bool) $post->is_favoritado,
                         'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
                         'name'       => $post->user->name,
                         'username'   => $post->user->username,
@@ -601,48 +616,51 @@ class UserController extends Controller
     public function ranking()
     {
         $authId = Auth::id();
+        $authUser = Auth::user();
 
-        if (Auth::user()->progresso < 2) {
+        //arrumar
+        if ($authUser->progresso < 0) {
             abort(403);
         }
 
-        $ranking = User::where('tipo', 0)
-            ->withCount('awards')
+        // Top 100 delegados com pelo menos 1 prêmio
+        $top100 = User::where('tipo', 0)
+            ->withCount(['awards' => fn($q) => $q->where('tipo', 0)])
             ->having('awards_count', '>', 0)
             ->orderByDesc('awards_count')
             ->orderBy('id')
             ->limit(100)
-            ->get()
-            ->map(fn($user, $index) => [
-                'posicao'       => $index + 1,
-                'name'          => $user->name,
-                'username'      => $user->username,
-                'awards_count'  => $user->awards_count,
-            ]);
+            ->get();
 
-        // posição do usuário logado entre todos os delegados
+        $ranking = $top100->map(fn($user, $index) => [
+            'posicao'      => $index + 1,
+            'name'         => $user->name,
+            'username'     => $user->username,
+            'foto'         => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'awards_count' => $user->awards_count,
+        ]);
+
+        // Card do usuário logado — posição global entre todos os delegados
         $todos = User::where('tipo', 0)
-            ->withCount('awards')
+            ->withCount(['awards' => fn($q) => $q->where('tipo', 0)])
             ->orderByDesc('awards_count')
             ->orderBy('id')
             ->get();
 
-        $posicaoAuth = $todos->search(fn($user) => $user->id === $authId);
+        $posicaoIndex = $todos->search(fn($u) => $u->id === $authId);
+        $userAuth = $posicaoIndex !== false ? $todos[$posicaoIndex] : null;
 
-        $userAuth = $todos[$posicaoAuth] ?? null;
+        $authCard = $userAuth ? [
+            'posicao'      => $posicaoIndex + 1,
+            'name'         => $userAuth->name,
+            'username'     => $userAuth->username,
+            'foto'         => $userAuth->foto ? asset('storage/' . $userAuth->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'awards_count' => $userAuth->awards_count,
+        ] : null;
 
-        if ($userAuth) {
-            $ranking->push([
-                'posicao'      => $posicaoAuth + 1,
-                'name'         => $userAuth->name,
-                'username'     => $userAuth->username,
-                'awards_count' => $userAuth->awards_count,
-                'is_auth'      => true,
-            ]);
-        }
-
-        return Inertia::render('Users/Ranking', [
-            'ranking' => $ranking,
+        return Inertia::render('User/Ranking', [
+            'ranking'  => $ranking->values(),
+            'authCard' => $authCard,
         ]);
     }
 }

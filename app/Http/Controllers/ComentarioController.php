@@ -16,7 +16,7 @@ class ComentarioController extends Controller
      */
     public function store(Request $request)
     {
-        if (Auth::user()->progresso < 3) {
+        if (Auth::user()->progresso < 3 && Auth::user()->tipo < 1) {
             abort(403);
         }
 
@@ -42,7 +42,17 @@ class ComentarioController extends Controller
             ]);
         }
 
-        return redirect()->back();
+        $user = Auth::user();
+
+        return response()->json([
+            'id'         => $comentario->id,
+            'texto'      => $comentario->texto,
+            'created_at' => $comentario->created_at->diffForHumans(),
+            'username'   => $user->username,
+            'user_foto'  => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'can_edit'   => true,
+            'can_delete' => true,
+        ]);
     }
 
     /**
@@ -64,7 +74,9 @@ class ComentarioController extends Controller
 
         $comentario->update($validated);
 
-        return redirect()->back();
+        return response()->json([
+            'texto' => $comentario->texto,
+        ]);
     }
 
     /**

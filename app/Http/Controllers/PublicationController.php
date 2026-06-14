@@ -25,6 +25,11 @@ class PublicationController extends Controller
             ($request->user()->tipo === 0 && $request->user()->progresso >= 6)
         );
 
+        $canComment = $request->user() && (
+            $request->user()->tipo === 1 ||
+            ($request->user()->tipo === 0 && $request->user()->progresso >= 3)
+        );
+
         return Publication::query()
             ->when($request->type === 'following' && $user, function ($query) use ($user) {
                 $query->whereIn('user_id', 
@@ -36,10 +41,13 @@ class PublicationController extends Controller
             ->withExists(['likes as is_liked' => function($q) use ($authId) {
                 $q->where('user_id', $authId);
             }])
+            ->withExists(['favoritos as is_favoritado' => function($q) use ($authId) {
+                $q->where('user_id', $authId);
+            }])
             ->latest()
             ->cursorPaginate(10)
-            ->through(function ($post) use ($authId, $canFav) {
-                return array_filter([
+            ->through(function ($post) use ($authId, $canFav, $canComment) {
+                $data = array_filter([
                     'id' => $post->id,
                     'type' => $post->type,
                     'descricao' => $post->descricao,
@@ -63,6 +71,12 @@ class PublicationController extends Controller
                     'delegation' => $post->delegation,
                     'created_at' => $post->created_at->format('d/m/Y'),
                 ], fn($v) => !is_null($v));
+
+                $data['can_comment'] = $canComment;
+                $data['is_liked'] = (bool) $post->is_liked;
+                $data['is_favoritado'] = (bool) $post->is_favoritado;
+
+                return $data;
             });
     }
 
@@ -142,14 +156,17 @@ class PublicationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $authId = auth()->id();
         $authUser = auth()->user();
 
         $post = Publication::with(['images', 'user'])
-            ->withCount('likes')
+            ->withCount(['likes', 'comentarios'])
             ->withExists(['likes as is_liked' => function($q) use ($authId) {
+                $q->where('user_id', $authId);
+            }])
+            ->withExists(['favoritos as is_favoritado' => function($q) use ($authId) {
                 $q->where('user_id', $authId);
             }])
             ->findOrFail($id);
@@ -168,9 +185,9 @@ class PublicationController extends Controller
                     'texto'      => $comentario->texto,
                     'username'   => $comentario->user->username,
                     'user_foto'  => $comentario->user->foto
-                        ? asset('storage/' . $post->user->foto)
+                        ? asset('storage/' . $comentario->user->foto)
                         : asset('storage/fotos_usuarios/foto.jpg'),
-                    'name' => $post->user->name,
+                    'name'       => $comentario->user->name,
                     'created_at' => $comentario->created_at->format('d/m/Y H:i'),
                     'can_edit'   => $ehAutor && $dentroDoTempo,
                     'can_delete' => $ehAutor || $ehDonoDaPublicacao,
@@ -182,31 +199,56 @@ class PublicationController extends Controller
             ($authUser->tipo === 0 && $authUser->progresso >= 3)
         );
 
+        $canFav = $authUser && (
+            $authUser->tipo === 1 ||
+            ($authUser->tipo === 0 && $authUser->progresso >= 6)
+        );
+
+        $canFix = $authUser && $authId === $post->user_id && (
+            $authUser->tipo === 1 ||
+            ($authUser->tipo === 0 && $authUser->progresso >= 5)
+        );
+
         $formattedPost = array_filter([
-            'id'          => $post->id,
-            'type'        => $post->type,
-            'mun'         => $post->mun,
-            'comite'      => $post->comite,
-            'delegation'  => $post->delegation,
-            'descricao'   => $post->descricao,
-            'video'       => $post->video ? asset('storage/' . $post->video) : null,
-            'username'    => $post->user->username,
-            'user_foto' => $post->user->foto
+            'id'                => $post->id,
+            'type'              => $post->type,
+            'mun'               => $post->mun,
+            'comite'            => $post->comite,
+            'delegation'        => $post->delegation,
+            'descricao'         => $post->descricao,
+            'video'             => $post->video ? asset('storage/' . $post->video) : null,
+            'username'          => $post->user->username,
+            'name'              => $post->user->name,
+            'user_foto'         => $post->user->foto
                 ? asset('storage/' . $post->user->foto)
                 : asset('storage/fotos_usuarios/foto.jpg'),
-            'images'      => $post->images->isNotEmpty()
+            'images'            => $post->images->isNotEmpty()
                 ? $post->images->map(fn($img) => asset('storage/' . $img->path))
                 : null,
-            'likes_count' => $post->likes_count,
-            'is_liked'    => $post->is_liked,
-            'can_edit'    => $authId && $authId === $post->user_id,
-            'created_at' => $post->created_at->format('d/m/Y')
+            'likes_count'       => $post->likes_count,
+            'comentarios_count' => $post->comentarios_count,
+            'is_liked' => $post->is_liked,
+            'fixo'              => $post->fixo,
+            'created_at'        => $post->created_at->format('d/m/Y'),
         ], fn($value) => !is_null($value));
+
+        $formattedPost['can_edit']      = (bool) ($authId && $authId === $post->user_id);
+        $formattedPost['is_liked']      = (bool) $post->is_liked;
+        $formattedPost['is_favoritado'] = (bool) $post->is_favoritado;
+        $formattedPost['can_comment'] = $canComment;
+        $formattedPost['can_fav']     = $canFav;
+        $formattedPost['can_fix']     = $canFix;
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'post'        => $formattedPost,
+                'comentarios' => $comentarios,
+            ]);
+        }
 
         return Inertia::render('Publication/Show', [
             'post'        => $formattedPost,
             'comentarios' => $comentarios,
-            'can_comment' => $canComment,
         ]);
     }
 
@@ -298,7 +340,7 @@ class PublicationController extends Controller
             $publication->update(['fixo' => true]);
         }
 
-        return redirect()->back();
+        return response()->json(['fixo' => $publication->fixo]);
     }
 
     public function toggleFavorito(Publication $publication)
@@ -322,42 +364,71 @@ class PublicationController extends Controller
             ]);
         }
 
-        return redirect()->back();
+        return response()->json(['favoritado' => !$favorito]);
     }
 
     public function favoritos()
     {
         $user = Auth::user();
+        $authId = $user->id;
 
         if ($user->tipo !== 1 && ($user->tipo !== 0 || $user->progresso < 6)) {
             abort(403);
         }
 
-        $favoritos = Favorito::with(['publication.images', 'publication.user'])
-            ->where('user_id', $user->id)
+        $canComment = $user->tipo === 1 || ($user->tipo === 0 && $user->progresso >= 3);
+
+        $publicationIds = Favorito::where('user_id', $authId)->pluck('publication_id');
+
+        $publications = Publication::with(['images', 'user'])
+            ->withCount(['likes', 'comentarios'])
+            ->withExists(['likes as is_liked' => function ($q) use ($authId) {
+                $q->where('user_id', $authId);
+            }])
+            ->whereIn('id', $publicationIds)
             ->latest()
             ->paginate(10);
 
-        $favoritos->through(function ($favorito) use ($user) {
-            $post = $favorito->publication;
-            return array_filter([
+        $publications->through(function ($post) use ($authId, $user, $canComment) {
+            $data = [
                 'id'                => $post->id,
                 'type'              => $post->type,
                 'mun'               => $post->mun,
                 'comite'            => $post->comite,
                 'delegation'        => $post->delegation,
                 'descricao'         => $post->descricao,
-                'video'             => $post->video ? asset('storage/' . $post->video) : null,
-                'images'            => $post->images->map(fn($img) => asset('storage/' . $img->path)),
                 'username'          => $post->user->username,
+                'name'              => $post->user->name,
                 'user_foto'         => $post->user->foto
                     ? asset('storage/' . $post->user->foto)
-                    : '/fotos_usuarios/foto.jpg',
-            ], fn($v) => !is_null($v));
+                    : asset('storage/fotos_usuarios/foto.jpg'),
+                'likes_count'       => $post->likes_count,
+                'comentarios_count' => $post->comentarios_count,
+                'is_liked'          => (bool) $post->is_liked,
+                'is_favoritado'     => true,
+                'fixo'              => $post->fixo,
+                'created_at'        => $post->created_at->format('d/m/Y'),
+                'can_edit'          => $authId === $post->user_id,
+                'can_comment'       => $canComment,
+                'can_fav'           => true,
+                'can_fix'           => $authId === $post->user_id && (
+                    $user->tipo === 1 || ($user->tipo === 0 && $user->progresso >= 5)
+                ),
+            ];
+
+            if ($post->video) {
+                $data['video'] = asset('storage/' . $post->video);
+            }
+
+            if ($post->images->isNotEmpty()) {
+                $data['images'] = $post->images->map(fn($img) => asset('storage/' . $img->path));
+            }
+
+            return $data;
         });
 
         return Inertia::render('Publication/Favoritos', [
-            'favoritos' => $favoritos,
+            'favoritos' => $publications,
         ]);
     }
 }

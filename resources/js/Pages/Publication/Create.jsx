@@ -144,12 +144,26 @@ function TipoPost({ data, setData }) {
   );
 }
 
+function TipoVideo({ data, setData }) {
+  return (
+    <>
+      <Field label="Descrição" name="descricao" value={data.descricao} onChange={setData} />
+      <FileButton
+        label="Selecione 1 vídeo (9:16)"
+        accept="video/mp4,video/mov,video/ogg,video/quicktime"
+        onChange={(files) => setData("video_file", files[0] ?? null)}
+      />
+    </>
+  );
+}
+
 const TYPE_CONFIG = {
   0: { title: "inscrição",  bg: "/images/inscricao-bg.png" },
   1: { title: "delegação",  bg: "/images/delegacao-bg.png" },
   2: { title: "presença",   bg: "/images/presenca-bg.png" },
   3: { title: "memória",    bg: "/images/memoria-bg.png" },
   4: { title: "post",       bg: "/images/post-bg.png" },
+  5: { title: "vídeo curto", bg: "/images/video-bg.png" },
 };
 
 export default function Create() {
@@ -164,6 +178,7 @@ export default function Create() {
     descricao: "",
     fixo: false,
     images: [],
+    video_file: null,
   });
 
   const firstError = Object.values(errors)[0];
@@ -180,6 +195,7 @@ export default function Create() {
       case 2: return <TipoPresenca data={data} setData={setData} />;
       case 3: return <TipoMemoria data={data} setData={setData} />;
       case 4: return <TipoPost data={data} setData={setData} />;
+      case 5: return <TipoVideo data={data} setData={setData} />;
       default: return null;
     }
   }

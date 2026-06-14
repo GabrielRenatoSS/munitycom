@@ -103,12 +103,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 
     Route::post('/comentarios', [ComentarioController::class, 'store'])->name('comentarios.store');
+    Route::put('/comentarios/{comentario}', [ComentarioController::class, 'update'])->name('comentarios.update');
     Route::delete('/comentarios/{comentario}', [ComentarioController::class, 'destroy'])->name('comentarios.destroy');
 
     Route::patch('/publications/{publication}/favorito', [PublicationController::class, 'toggleFavorito'])->name('publications.favorito');
     Route::patch('/publications/{publication}/fixo', [PublicationController::class, 'toggleFixo'])->name('publications.fixo');
     Route::get('/ranking', [UserController::class, 'ranking'])->name('users.ranking');
     Route::get('/favoritos', [PublicationController::class, 'favoritos'])->name('publications.favoritos');
+    Route::patch('/publications/{publication}/favorito', [PublicationController::class, 'toggleFavorito'])->name('publications.favorito');
     Route::get('/notificacoes', [NotificacaoController::class, 'index'])->name('notificacoes.index');
 
     Route::middleware('admin')->group(function () {

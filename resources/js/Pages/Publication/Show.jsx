@@ -130,10 +130,28 @@ function GaleriaMemoria({ images, perPage }) {
   );
 }
 
-function BarraInferior({ post, textIndent }) {
+function BarraInferior({ post, textIndent, onDesfavoritado }) {
   const [liked, setLiked] = useState(!!post.is_liked);
   const [count, setCount] = useState(post.likes_count ?? 0);
   const [confirmando, setConfirmando] = useState(false);
+  const [fixo, setFixo] = useState(!!post.fixo);
+  const [favoritado, setFavoritado] = useState(!!post.is_favoritado);
+
+  function toggleFavorito() {
+    const novo = !favoritado;
+    setFavoritado(novo);
+    axios.patch(`/publications/${post.id}/favorito`)
+      .then(() => {
+        if (!novo && onDesfavoritado) onDesfavoritado();
+      })
+      .catch(() => setFavoritado(!novo));
+  }
+
+  function toggleFixo() {
+    const novo = !fixo;
+    setFixo(novo);
+    axios.patch(`/publications/${post.id}/fixo`).catch(() => setFixo(!novo));
+  }
 
   function toggleLike() {
     const newLiked = !liked;
@@ -152,7 +170,7 @@ function BarraInferior({ post, textIndent }) {
   }
 
   return (
-    <div className="flex items-center gap-3" style={{ paddingLeft: textIndent }}>
+    <div className="flex items-center gap-3" style={{ paddingLeft: textIndent }} onClick={e => e.stopPropagation()}>
       <button
         onClick={toggleLike}
         style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.25rem", padding: 0 }}
@@ -165,12 +183,45 @@ function BarraInferior({ post, textIndent }) {
         <span style={{ ...TEXT, fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)" }}>{count}</span>
       </button>
 
+      <button
+        style={{ background: "none", border: "none", cursor: post.can_comment ? "pointer" : "default", display: "flex", alignItems: "center", gap: "0.25rem", padding: 0 }}
+      >
+        <img
+          src={post.can_comment ? "/images/comentar.png" : "/images/comentarios.png"}
+          alt="comentarios"
+          style={{ width: "clamp(14px, 4vw, 18px)", height: "clamp(14px, 4vw, 18px)", objectFit: "contain" }}
+        />
+        <span style={{ ...TEXT, fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)" }}>{post.comentarios_count ?? 0}</span>
+      </button>
+
+      {post.can_fav && (
+        <button
+          onClick={toggleFavorito}
+          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}
+        >
+          <img
+            src={favoritado ? "/images/favoritado.png" : "/images/favoritar.png"}
+            alt={favoritado ? "Desfavoritar" : "Favoritar"}
+            style={{ width: "clamp(14px, 4vw, 18px)", height: "clamp(14px, 4vw, 18px)", objectFit: "contain" }}
+          />
+        </button>
+      )}
+
       <span style={{ ...TEXT, fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", color: "#555" }}>
         {post.created_at || ""}
       </span>
 
-      {post.can_edit && (
-              <div className="flex gap-2 ml-auto" style={{ position: "relative" }}>
+      <div className="flex gap-2 ml-auto" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+        {post.can_fix && (
+          <button
+            onClick={toggleFixo}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            <img src={fixo ? "/images/fixado.png" : "/images/fixar.png"} alt={fixo ? "Desfixar" : "Fixar"} style={{ width: "clamp(14px, 4vw, 18px)", height: "clamp(14px, 4vw, 18px)", objectFit: "contain" }} />
+          </button>
+        )}
+        {post.can_edit && (
+          <>
                 <button
                   onClick={() => router.visit(`/publications/${post.id}/edit`)}
                   style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
@@ -192,13 +243,14 @@ function BarraInferior({ post, textIndent }) {
                     />
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-        );
-      }
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
-function PostCard({ post }) {
+function PostCard({ post, onClick, noBorder, onDesfavoritado }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const perPage = isMobile ? 1 : 2;
   const textIndent = "44px";
@@ -209,14 +261,14 @@ function PostCard({ post }) {
   const [page4, setPage4] = useState(0);
 
   return (
-    <div style={CARD}>
+    <div style={{ ...CARD, border: noBorder ? "none" : "2px solid #8c52ff", cursor: onClick ? "pointer" : "default" }} onClick={onClick ? (e) => { if (e.defaultPrevented) return; onClick(); } : undefined}>
       {/* Cabeçalho */}
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
         <Avatar src={post.user_foto} username={post.username} />
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {/* Texto do cabeçalho */}
           <div style={{ flex: 1 }}>
-            {(post.type === 3 || post.type === 4) ? (
+            {(post.type === 3 || post.type === 4 || post.type === 5) ? (
               <div className="flex items-center gap-1 flex-wrap">
                 <span style={{ ...TEXT }}>@{post.username}</span>
                 {post.mun && (
@@ -267,13 +319,31 @@ function PostCard({ post }) {
         <GaleriaInterna images={post.images} perPage={perPage} page={page4} setPage={setPage4} />
       )}
 
+
+      {/* Vídeo tipo 5 — vídeo curto, proporção 9:16 */}
+      {post.type === 5 && post.video && (
+        <video
+          src={post.video}
+          controls
+          playsInline
+          style={{
+            width: "100%",
+            maxHeight: "70vh",
+            aspectRatio: "9/16",
+            objectFit: "cover",
+            borderRadius: 0,
+            display: "block",
+          }}
+        />
+      )}
+
       {/* Descrição */}
-      {(post.type === 3 || post.type === 4) && post.descricao && (
+      {(post.type === 3 || post.type === 4 || post.type === 5) && post.descricao && (
         <p style={TEXT}>{post.descricao}</p>
       )}
 
       {/* Barra inferior */}
-      <BarraInferior post={post} textIndent={textIndent} />
+      <BarraInferior post={post} textIndent={textIndent} onDesfavoritado={onDesfavoritado} />
     </div>
   );
 }

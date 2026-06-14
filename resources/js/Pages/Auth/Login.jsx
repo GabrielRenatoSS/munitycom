@@ -20,6 +20,7 @@ export default function Login() {
         backgroundImage: "url('/images/login-bg.jpeg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
       {/* Overlay */}
