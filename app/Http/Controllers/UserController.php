@@ -23,10 +23,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::orderBy('id')
+       $users = User::whereIn('tipo', [0, 1])
+            ->orderBy('id')
+            ->select(['id', 'name', 'username', 'email', 'foto', 'bloqueio', 'created_at'])
             ->paginate(20);
 
-        return Inertia::render('Users/Index', [
+        return Inertia::render('User/Index', [
             'users' => $users,
         ]);
     }
@@ -539,7 +541,8 @@ class UserController extends Controller
                 $query->where('name', 'LIKE', "%{$term}%")
                     ->orWhere('username', 'LIKE', "%{$term}%");
             })
-            ->select(['id', 'name', 'username', 'foto', 'tipo'])
+            ->whereIn('tipo', [0, 1])
+            ->select(['id', 'name', 'username', 'email', 'foto', 'tipo', 'bloqueio', 'created_at'])
             ->withExists(['followers as is_following' => function ($query) use ($authUserId) {
                 $query->where('follower_id', $authUserId);
             }])
@@ -560,6 +563,9 @@ class UserController extends Controller
                     'is_interested' => ($auth->tipo === 0 && $user->tipo === 1)
                         ? (bool) $user->is_interested
                         : null,
+                    'created_at' => $user->created_at,
+                    'bloqueio' => (bool)$user->bloqueio,
+                    'email' => $user->email,
                 ];
             });
 
@@ -609,8 +615,7 @@ class UserController extends Controller
     public function toggleBloqueio(User $user)
     {
         $user->update(['bloqueio' => !$user->bloqueio]);
-
-        return redirect()->back();
+        return response()->json(['bloqueio' => $user->bloqueio]);
     }
 
     public function ranking()

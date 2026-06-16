@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { router, usePage } from "@inertiajs/react";
+import NotificacoesPopup from "@/Components/NotificacoesPopup";
 
 export default function MenuInferior({ onTogglePublications, showPublications }) {
   const { auth } = usePage().props;
@@ -11,6 +12,28 @@ export default function MenuInferior({ onTogglePublications, showPublications })
   const foto = user?.foto
     ? `/storage/${user.foto}`
     : "/storage/fotos_usuarios/foto.jpg";
+
+  const [showNotificacoes, setShowNotificacoes] = useState(false);
+  const [notificacoes, setNotificacoes] = useState(null);
+  const [loadingNotificacoes, setLoadingNotificacoes] = useState(false);
+
+  function handleToggleNotificacoes() {
+    if (showNotificacoes) {
+      setShowNotificacoes(false);
+      return;
+    }
+
+    setShowNotificacoes(true);
+    setLoadingNotificacoes(true);
+
+    fetch("/notificacoes", {
+      headers: { Accept: "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => setNotificacoes(data.notificacoes))
+      .catch(() => setNotificacoes({ data: [] }))
+      .finally(() => setLoadingNotificacoes(false));
+  }
 
   const icones = [
     {
@@ -39,7 +62,7 @@ export default function MenuInferior({ onTogglePublications, showPublications })
       key: "notificacoes",
       src: "/images/notificacoes-menu.png",
       alt: "Notificações",
-      action: () => router.visit("/notificacoes"),
+      action: handleToggleNotificacoes,
       show: tipo === 0 || tipo === 1,
     },
     {
@@ -73,45 +96,55 @@ export default function MenuInferior({ onTogglePublications, showPublications })
   ].filter((i) => i.show);
 
   return (
-    <nav
-      style={{
-        background: "#8c52ff",
-        borderRadius: "50px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "0.4rem 1rem",
-        gap: "0.5rem",
-        width: "100%",
-        boxSizing: "border-box",
-        height: "2.4rem",
-      }}
-    >
-      {icones.map((icone) => (
-        <button
-          key={icone.key}
-          onClick={icone.action ?? (() => router.visit(icone.href))}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <img
-            src={icone.src}
-            alt={icone.alt}
+    <>
+      <nav
+        style={{
+          background: "#8c52ff",
+          borderRadius: "50px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0.4rem 1rem",
+          gap: "0.5rem",
+          width: "100%",
+          boxSizing: "border-box",
+          height: "2.4rem",
+        }}
+      >
+        {icones.map((icone) => (
+          <button
+            key={icone.key}
+            onClick={icone.action ?? (() => router.visit(icone.href))}
             style={{
-              height: "1.2rem",
-              width: icone.circular ? "1.2rem" : "auto",
-              borderRadius: icone.circular ? "50%" : 0,
-              objectFit: icone.circular ? "cover" : "contain",
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
             }}
-          />
-        </button>
-      ))}
-    </nav>
+          >
+            <img
+              src={icone.src}
+              alt={icone.alt}
+              style={{
+                height: "1.2rem",
+                width: icone.circular ? "1.2rem" : "auto",
+                borderRadius: icone.circular ? "50%" : 0,
+                objectFit: icone.circular ? "cover" : "contain",
+              }}
+            />
+          </button>
+        ))}
+      </nav>
+
+      {showNotificacoes && (
+        <NotificacoesPopup
+          notificacoes={notificacoes ?? { data: [] }}
+          loading={loadingNotificacoes}
+          onClose={() => setShowNotificacoes(false)}
+        />
+      )}
+    </>
   );
 }

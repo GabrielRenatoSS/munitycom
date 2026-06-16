@@ -82,7 +82,7 @@ export default function Show() {
             {/* Coluna 2 — 25.1% */}
             <div style={{ width: "25.1%", flexShrink: 0, height: "100%", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ height: "66.1%", flexShrink: 0, borderRadius: "20px", overflow: "hidden" }}>
-                <Progresso user={user} />
+                <Progresso user={user} isOwnProfile={is_own_profile} />
               </div>
               {!isMun && (
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -195,7 +195,7 @@ export default function Show() {
                 </div>
               )}
               <div style={{ flexShrink: 0, width: "38%", minWidth: "80px", borderRadius: "13px", overflow: "hidden" }}>
-                <Progresso user={user} />
+                <Progresso user={user} isOwnProfile={is_own_profile} />
               </div>
             </div>
 

@@ -6,8 +6,9 @@ use App\Models\PasswordResetCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Inertia\Inertia;
 
-class ResetPasswordController extends Controller
+class PasswordResetController extends Controller
 {
 
     public function showCode()
@@ -16,7 +17,9 @@ class ResetPasswordController extends Controller
             return redirect()->route('forgot-password.show');
         }
 
-        return view('auth.verify-code');
+        return Inertia::render('Auth/VerifyCode', [
+            'resetEmail' => session('reset_email'),
+        ]);
     }
 
     public function verifyCode(Request $request)
@@ -42,7 +45,7 @@ class ResetPasswordController extends Controller
             return redirect()->route('forgot-password.show');
         }
 
-        return view('auth.reset-password');
+        return Inertia::render('Auth/ResetPassword');
     }
 
     public function reset(Request $request)

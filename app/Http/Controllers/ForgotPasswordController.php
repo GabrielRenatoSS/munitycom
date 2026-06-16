@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use App\Mail\ResetCodeMail;
 use App\Models\PasswordResetCode;
 use Illuminate\Support\Facades\Mail;
+use Inertia\Inertia;
 
 class ForgotPasswordController extends Controller
 {
     public function show()
     {
-        return view('auth.forgot-password');
+        return Inertia::render('Auth/ForgotPassword');
     }
 
     public function send(Request $request)

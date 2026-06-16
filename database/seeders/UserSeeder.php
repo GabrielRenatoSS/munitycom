@@ -86,10 +86,25 @@ class UserSeeder extends Seeder
                 'pais'       => 'Brasil',
                 'bloqueio'   => false,
             ],
+            [
+                'name'       => 'Administrador',
+                'email'      => 'munitycom.social@gmail.com',
+                'password'   => Hash::make('password123'),
+                'username'   => 'munitycom',
+                'tipo'       => 2,
+                'progresso'  => 0,
+                'cidade'     => 'Porto Alegre',
+                'estado'     => 'RS',
+                'pais'       => 'Brasil',
+                'bloqueio'   => false,
+            ],
         ];
 
         foreach ($users as $user) {
-            User::create($user);
+            User::firstOrCreate(
+                ['email' => $user['email']],
+                $user
+            );
         }
     }
 }

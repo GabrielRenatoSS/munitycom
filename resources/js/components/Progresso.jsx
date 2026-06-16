@@ -12,7 +12,7 @@ const NIVEIS = {
   7: { titulo: "Best Delegate",         img: "/images/p-7.png" },
 };
 
-export default function Progresso({ user }) {
+export default function Progresso({ user, isOwnProfile }) {
   const isMun = user.tipo === 1;
   const nivel = isMun ? 0 : (user.progresso ?? 0);
   const config = NIVEIS[nivel] ?? NIVEIS[0];
@@ -75,7 +75,7 @@ export default function Progresso({ user }) {
       />
 
       {/* Botão */}
-      {(isMun || nivel > 0) && (
+      {(isMun ? isOwnProfile : nivel > 0) && (
       <button
         onClick={btnAction}
         className="rounded-full transition-all hover:brightness-110 active:scale-95"

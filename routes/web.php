@@ -16,7 +16,6 @@ use App\Http\Controllers\ComentarioController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\InterestController;
 use App\Http\Controllers\ForgotPasswordController;
-use App\Http\Controllers\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use Inertia\Inertia;
@@ -34,10 +33,10 @@ Route::middleware('guest')->group(function () {
     
     Route::get('/forgot-password', [ForgotPasswordController::class, 'show'])->name('forgot-password.show');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('forgot-password.send');
-    Route::get('/verify-code', [ResetPasswordController::class, 'showCode'])->name('verify-code.show');
-    Route::post('/verify-code', [ResetPasswordController::class, 'verifyCode'])->name('verify-code.verify');
-    Route::get('/reset-password', [ResetPasswordController::class, 'showReset'])->name('reset-password.show');
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('reset-password.reset');
+    Route::get('/verify-code', [PasswordResetController::class, 'showCode'])->name('verify-code.show');
+    Route::post('/verify-code', [PasswordResetController::class, 'verifyCode'])->name('verify-code.verify');
+    Route::get('/reset-password', [PasswordResetController::class, 'showReset'])->name('reset-password.show');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('reset-password.reset');
 
     Route::get('/register', [UserController::class, 'create'])->name('register');
     Route::post('/register', [UserController::class, 'store'])->name('register.store');
@@ -45,6 +44,15 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     
+    Route::middleware('admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        
+        Route::post('/users/{user:id}/bloqueio', [UserController::class, 'toggleBloqueio'])->name('users.bloqueio');
+
+        Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
+        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+    });
+
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/feed', function () {
@@ -73,14 +81,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/search', [UserController::class, 'search'])->name('users.search');
 
     Route::post('/posts/{publication}/like', [LikeController::class, 'toggle'])->name('posts.like');
-    
-    Route::get('/edicoes/create', [EdicaoController::class, 'create'])->name('edicoes.create');
-    Route::post('/edicoes', [EdicaoController::class, 'store'])->name('edicoes.store');
-    Route::get('/edicoes/{username?}', [EdicaoController::class, 'index'])->name('edicoes.index');
-    Route::get('/{edicao}/detalhes', [EdicaoController::class, 'show'])->name('edicoes.show');
-    Route::get('/{edicao}/edit', [EdicaoController::class, 'edit'])->name('edicoes.edit');
-    Route::put('/{edicao}', [EdicaoController::class, 'update'])->name('edicoes.update');
-    Route::delete('/{edicao}', [EdicaoController::class, 'destroy'])->name('edicoes.destroy');
 
     Route::get('/comites/{comite}/membros', [MembroComiteController::class, 'index'])->name('comites.membros.index');
     Route::post('/comites/{comite}/membros', [MembroComiteController::class, 'store'])->name('membros.store');
@@ -113,13 +113,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/publications/{publication}/favorito', [PublicationController::class, 'toggleFavorito'])->name('publications.favorito');
     Route::get('/notificacoes', [NotificacaoController::class, 'index'])->name('notificacoes.index');
 
-    Route::middleware('admin')->group(function () {
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        
-        Route::patch('/users/{user}/bloqueio', [UserController::class, 'toggleBloqueio'])->name('users.bloqueio');
-
-        Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
-        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
-        Route::patch('/feedback/{feedback}/leitura', [FeedbackController::class, 'toggleLeitura'])->name('feedback.leitura');
-    });
+    Route::get('/edicoes/create', [EdicaoController::class, 'create'])->name('edicoes.create');
+    Route::post('/edicoes', [EdicaoController::class, 'store'])->name('edicoes.store');
+    Route::get('/edicoes/{username?}', [EdicaoController::class, 'index'])->name('edicoes.index');
+    Route::get('/{edicao}/detalhes', [EdicaoController::class, 'show'])->name('edicoes.show');
+    Route::get('/{edicao}/edit', [EdicaoController::class, 'edit'])->name('edicoes.edit');
+    Route::put('/{edicao}', [EdicaoController::class, 'update'])->name('edicoes.update');
+    Route::delete('/{edicao}', [EdicaoController::class, 'destroy'])->name('edicoes.destroy');
 });
