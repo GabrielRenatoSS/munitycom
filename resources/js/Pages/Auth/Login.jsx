@@ -17,7 +17,7 @@ export default function Login() {
     <div
       className="relative w-full min-h-screen overflow-hidden"
       style={{
-        backgroundImage: "url('/images/login-bg.jpeg')",
+        backgroundImage: "url('/images/login-bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",

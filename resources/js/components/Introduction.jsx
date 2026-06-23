@@ -30,7 +30,7 @@ export default function Welcome() {
             style={{
               fontFamily: "'TAN Nimbus', serif",
               fontSize: "clamp(3rem, 5.5vw, 80px)",
-              lineHeight: 1.05,
+              lineHeight: 1.35,
               color: "#ffffff",
               textAlign: "right",
               fontWeight: 700,

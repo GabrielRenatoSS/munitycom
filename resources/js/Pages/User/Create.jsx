@@ -50,9 +50,10 @@ export default function Create() {
     <div
       className="relative w-full min-h-screen overflow-hidden"
       style={{
-        backgroundImage: "url('/images/create-bg.jpeg')",
+        backgroundImage: "url('/images/create-bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
       <div className="absolute inset-0 bg-black/30 pointer-events-none" />

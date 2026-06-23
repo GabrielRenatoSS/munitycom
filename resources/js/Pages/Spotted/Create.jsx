@@ -236,6 +236,7 @@ export default function Create() {
         backgroundImage: "url('/images/spotted-bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
       <div className="absolute inset-0 bg-black/30 pointer-events-none" />

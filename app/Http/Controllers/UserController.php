@@ -64,7 +64,7 @@ class UserController extends Controller
         $data['foto'] = $caminhoFoto;
 
         $data['bloqueio'] = false;
-        $data['progesso'] = 0;
+        $data['progresso'] = 0;
 
         $data['password'] = Hash::make($data['password']);
         User::create($data);

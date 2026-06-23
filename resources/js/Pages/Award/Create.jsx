@@ -168,6 +168,7 @@ export default function CreateAward() {
         backgroundImage: `url('${config.bg}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
       <div className="absolute inset-0 bg-black/30 pointer-events-none" />

@@ -14,7 +14,7 @@ export default function Purpose() {
         <div className="flex flex-col" style={{ width: "24.11%", flexShrink: 0 }}>
           <div style={{ height: "13.8%" }} />
           <div className="relative overflow-hidden rounded-[2rem]" style={{ height: "80%" }}>
-            <img src="/images/proposito-1.jpeg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src="/images/proposito-1.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 flex items-end justify-start p-6">
               <p style={{
@@ -41,7 +41,7 @@ export default function Purpose() {
         <div className="flex flex-col" style={{ width: "24.11%", flexShrink: 0 }}>
           <div style={{ height: "6.2%" }} />
           <div className="relative overflow-hidden rounded-[2rem]" style={{ height: "80%" }}>
-            <img src="/images/proposito-2.jpeg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src="/images/proposito-2.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 flex items-start justify-end p-6">
               <p style={{
@@ -78,7 +78,7 @@ export default function Purpose() {
             nosso<br />propósito
           </h2>
           <div className="relative overflow-hidden rounded-[2rem]" style={{ height: "56.2%" }}>
-            <img src="/images/proposito-3.jpeg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img src="/images/proposito-3.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 flex items-end justify-start p-6">
               <p style={{

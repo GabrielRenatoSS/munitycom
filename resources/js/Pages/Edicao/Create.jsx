@@ -22,6 +22,7 @@ export default function Create() {
         backgroundImage: "url('/images/edicao-bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
       {/* Overlay */}
