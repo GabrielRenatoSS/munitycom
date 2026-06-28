@@ -60,7 +60,7 @@ class UserController extends Controller
             'foto'  => 'required|image|max:2048',
         ]);
 
-        $caminhoFoto = $request->file('foto')->store('fotos_usuarios', 'public');
+        $caminhoFoto = $request->file('foto')->store('fotos_usuarios', config('filesystems.default'));
         $data['foto'] = $caminhoFoto;
 
         $data['bloqueio'] = false;
@@ -496,7 +496,7 @@ class UserController extends Controller
             if ($user->foto) {
                 Storage::disk('public')->delete($user->foto);
             }
-            $path = $request->file('foto')->store('fotos_usuarios', 'public');
+            $path = $request->file('foto')->store('fotos_usuarios', config('filesystems.default'));
             $user->foto = $path;
         }
 
@@ -504,7 +504,7 @@ class UserController extends Controller
             if ($user->ft_perfil) {
                 Storage::disk('public')->delete($user->ft_perfil);
             }
-            $path = $request->file('ft_perfil')->store('fotos_perfis', 'public');
+            $path = $request->file('ft_perfil')->store('fotos_perfis', config('filesystems.default'));
             $user->ft_perfil = $path;
         }
 

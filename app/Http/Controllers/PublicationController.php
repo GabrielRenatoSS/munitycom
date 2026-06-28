@@ -136,13 +136,13 @@ class PublicationController extends Controller
         ]);
 
         if ($request->hasFile('video_file')) {
-            $videoPath = $request->file('video_file')->store('videos_publicacoes', 'public');
+            $videoPath = $request->file('video_file')->store('videos_publicacoes', config('filesystems.default'));
             $publication->update(['video' => $videoPath]);
         }
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
-                $path = $image->store('publications', 'public');
+                $path = $image->store('publications', config('filesystems.default'));
                 $publication->images()->create([
                     'path'  => $path,
                     'order' => $index,

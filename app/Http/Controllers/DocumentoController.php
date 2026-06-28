@@ -80,7 +80,7 @@ class DocumentoController extends Controller
         ];
 
         if ($request->tipo == 0 && $request->hasFile('brasao')) {
-            $data['brasao'] = $request->file('brasao')->store('fotos_brasao', 'public');
+            $data['brasao'] = $request->file('brasao')->store('fotos_brasao', config('filesystems.default'));
         }
 
         if ($request->tipo == 7) {
@@ -293,27 +293,24 @@ public function show(Documento $documento)
         $data = ['conteudo' => $validated['conteudo']];
 
         if ($documento->tipo == 0 && $request->hasFile('brasao')) {
-            Storage::disk('public')->delete($documento->brasao);
-            $data['brasao'] = $request->file('brasao')->store('fotos_brasao', 'public');
+            Storage::disk(config('filesystems.default'))->delete($documento->brasao);
+            $data['brasao'] = $request->file('brasao')->store('fotos_brasao', config('filesystems.default'));
         }
 
         if ($documento->tipo == 7) {
             foreach (['foto1', 'foto2', 'foto3', 'foto4'] as $index => $foto) {
                 if ($request->hasFile($foto)) {
-                    // substituiu: apaga a antiga e salva a nova
-                    Storage::disk('public')->delete($documento->$foto);
+                    Storage::disk(config('filesystems.default'))->delete($documento->$foto);
                     $numero = $index + 1;
                     $data[$foto] = $request->file($foto)->storeAs(
                         'fotos_noticias',
                         "{$numero}_" . time() . '_' . $request->file($foto)->getClientOriginalName(),
-                        'public'
+                        config('filesystems.default')
                     );
                 } elseif ($request->input("remover_{$foto}")) {
-                    // sinalizou remoção sem substituição: apaga e seta null
-                    Storage::disk('public')->delete($documento->$foto);
+                    Storage::disk(config('filesystems.default'))->delete($documento->$foto);
                     $data[$foto] = null;
                 }
-                // se não veio nada, mantém como está
             }
         }
 
