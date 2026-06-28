@@ -317,7 +317,7 @@ export default function Informacoes({ user, isOwnProfile }) {
 
           {/* Ícones mobile — absoluto no canto direito */}
           {isOwnProfile && !editando && (
-            <div className="flex md:hidden flex-col gap-0.5" style={{ position: "absolute", top: "2rem", right: 0 }}>
+            <div className="flex md:hidden flex-col gap-0.5" style={{ position: "absolute", top: "0.9rem", right: 0 }}>
               <button onClick={() => setEditando(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 <img src="/images/editar.png" alt="editar" style={{ width: 13, height: 13, objectFit: "contain" }} />
               </button>

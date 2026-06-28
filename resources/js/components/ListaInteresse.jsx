@@ -49,7 +49,7 @@ export default function ListaInteresse({ interests = [], isOwnProfile = false })
           <span
             style={{
               ...TEXT,
-              fontSize: "clamp(0.8rem, 3.5vw, 1.3rem)",
+              fontSize: "clamp(0.7rem, 3.5vw, 1.3rem)",
               fontWeight: 700,
               color: "#6425d8",
             }}
@@ -62,7 +62,7 @@ export default function ListaInteresse({ interests = [], isOwnProfile = false })
               style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
               title="Editar lista de interesse"
             >
-              <img src="/images/editar.png" alt="editar" style={{ width: "clamp(14px, 4vw, 16px)", height: "clamp(14px, 4vw, 16px)", objectFit: "contain" }} />
+              <img src="/images/editar.png" alt="editar" style={{ width: "clamp(16px, 4vw, 16px)", height: "clamp(16px, 4vw, 16px)", objectFit: "contain" }} />
             </button>
           )}
         </div>
@@ -107,7 +107,7 @@ export default function ListaInteresse({ interests = [], isOwnProfile = false })
           visible.map((mun) => (
             <div
               key={mun.id}
-              style={{ position: "relative", width: "clamp(60px, 16.66%, 120px)", height: "clamp(60px, 16.66%, 120px)", flexShrink: 0 }}
+              style={{ position: "relative", width: "clamp(58px, 16.66%, 120px)", height: "clamp(58px, 16.66%, 120px)", flexShrink: 0 }}
             >
               <img
                 src={mun.foto || "/storage/fotos_usuarios/foto.jpg"}

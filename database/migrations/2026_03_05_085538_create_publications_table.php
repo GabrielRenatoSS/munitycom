@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string("mun")->nullable();
             $table->string("comite")->nullable();
             $table->string("delegation")->nullable();
-            $table->string("descricao")->nullable();
+            $table->text("descricao")->nullable();
             $table->string("video")->nullable();
             $table->boolean("fixo");
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

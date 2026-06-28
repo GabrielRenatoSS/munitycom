@@ -1,5 +1,6 @@
-import React from "react";
 import { router } from "@inertiajs/react";
+import React, { useState } from "react";
+import ModalProgresso from "./ModalProgresso";
 
 const NIVEIS = {
   0: { titulo: null,                    img: "/images/p-0.png" },
@@ -15,12 +16,13 @@ const NIVEIS = {
 export default function Progresso({ user, isOwnProfile }) {
   const isMun = user.tipo === 1;
   const nivel = isMun ? 0 : (user.progresso ?? 0);
+  const [modalAberto, setModalAberto] = useState(false);
   const config = NIVEIS[nivel] ?? NIVEIS[0];
 
   const btnLabel = isMun ? "GERENCIAR EDIÇÕES" : "VER PROGRESSO";
   const btnAction = isMun
     ? () => router.get(`/edicoes/${user.username}`)
-    : () => router.get(`/profile/${user.username}/progresso`);
+    : () => setModalAberto(true);
 
   return (
     <div
@@ -42,16 +44,17 @@ export default function Progresso({ user, isOwnProfile }) {
         <div
           style={{
             background: "#6425d8",
-            borderRadius: "10px",
-            padding: "0.4rem 1rem",
-            width: "100%",
+            borderRadius: "20px",
+            padding: "0.4rem 0.5rem",
+            width: "90%",
             textAlign: "center",
+            fontFamily: "'Glacial Indifference', sans-serif",
+            fontSize: "clamp(0.6rem, 1.7vw, 1.9rem)",
+            lineHeight: "clamp(0.7rem, 1.7vw, 1.7rem)",
           }}
         >
           <span
             style={{
-              fontFamily: "'AGRandir', sans-serif",
-              fontSize: "clamp(0.9rem, 1.5vw, 1.4rem)",
               fontWeight: 700,
               color: "#fff",
             }}
@@ -84,12 +87,12 @@ export default function Progresso({ user, isOwnProfile }) {
           border: "none",
           cursor: "pointer",
           width: "90%",
-          padding: "0.4rem 0.6rem",
+          padding: "0.2rem 0.6rem",
           wordBreak: "break-word",
           whiteSpace: "normal",
           textAlign: "center",
           fontFamily: "'AGRandir', sans-serif",
-          fontSize: "clamp(0.5rem, 3vw, 1.2rem)",
+          fontSize: "clamp(0.3rem, 2vw, 1.4rem)",
           fontWeight: 700,
           color: "#6425d8",
           textTransform: "uppercase",
@@ -98,6 +101,9 @@ export default function Progresso({ user, isOwnProfile }) {
       >
         {btnLabel}
       </button>
+      )}
+      {modalAberto && (
+        <ModalProgresso user={user} onClose={() => setModalAberto(false)} />
       )}
     </div>
   );

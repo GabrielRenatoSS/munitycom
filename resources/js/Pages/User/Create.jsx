@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useForm, Link } from "@inertiajs/react";
 import AuthCard from "../../components/AuthCard";
+import ModalTermos from "../../components/ModalTermos";
 
 export default function Create() {
   const { data, setData, post, processing, errors } = useForm({
@@ -130,8 +131,9 @@ export default function Create() {
   );
 }
 
-// Campos extras que não cabem no AuthCard genérico
 function ExtraFields({ data, setData, fotoNome, setFotoNome }) {
+  const [modalTermos, setModalTermos] = useState(false);
+
   const labelStyle = {
     fontFamily: "'Glacial Indifference', sans-serif",
     fontSize: "clamp(0.85rem, 4vw, 2.5rem)",
@@ -255,13 +257,22 @@ function ExtraFields({ data, setData, fotoNome, setFotoNome }) {
       </div>
 
       {/* Termos */}
-      <label className="flex items-center gap-3 cursor-pointer" style={{ marginTop: "0.3rem" }}>
+      <div className="flex items-center gap-3" style={{ marginTop: "0.3rem" }}>
         <input
           type="checkbox"
           style={radioStyle}
         />
-        <span style={labelStyle}>Li e aceito os termos de uso</span>
-      </label>
+        <span
+          onClick={() => setModalTermos(true)}
+          style={{ ...labelStyle, cursor: "pointer", textDecorationColor: "#6425d8" }}
+        >
+          Li e aceito os termos de uso
+        </span>
+      </div>
+
+      {modalTermos && (
+        <ModalTermos onClose={() => setModalTermos(false)} />
+      )}
     </div>
   );
 }
