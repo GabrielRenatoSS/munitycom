@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { router, usePage } from "@inertiajs/react";
-import NotificacoesPopup from "@/Components/NotificacoesPopup";
+import NotificacoesPopup from "@/components/NotificacoesPopup";
 
 export default function MenuInferior({ onTogglePublications, showPublications }) {
   const { auth } = usePage().props;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Notificacao from '@/Components/Notificacao';
+import Notificacao from '@/components/Notificacao';
 
 const s = {
     overlayDesktop: {
