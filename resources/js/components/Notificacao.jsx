@@ -70,8 +70,8 @@ export default function Notificacao({ notificacao }) {
     const isAnonimo = tipo === 3 && spotted?.anonimo;
 
     const fotoUrl = (!isAnonimo && remetente?.foto)
-        ? `/storage/${remetente.foto}`
-        : '/storage/fotos_usuarios/foto.jpg';
+        ? `${import.meta.env.VITE_STORAGE_URL}/${remetente.foto}`
+        : `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`;
 
     function handleToggleFollow() {
         setLoading(true);

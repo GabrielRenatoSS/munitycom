@@ -49,7 +49,9 @@ class ComentarioController extends Controller
             'texto'      => $comentario->texto,
             'created_at' => $comentario->created_at->diffForHumans(),
             'username'   => $user->username,
-            'user_foto'  => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'user_foto' => $user->foto 
+                ? Storage::url($user->foto) 
+                : Storage::url('fotos_usuarios/foto.jpg'),
             'can_edit'   => true,
             'can_delete' => true,
         ]);

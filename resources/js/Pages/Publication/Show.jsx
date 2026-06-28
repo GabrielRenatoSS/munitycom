@@ -18,7 +18,7 @@ const CARD = {
 function Avatar({ src, username }) {
   return (
     <img
-      src={src || "/storage/fotos_usuarios/foto.jpg"}
+      src={src || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
       alt="foto"
       onClick={() => username && router.visit(`/profile/${username}`)}
       style={{ width: "clamp(20px, 7vw, 36px)", height: "clamp(20px, 7vw, 36px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0, alignSelf: "flex-start", cursor: "pointer" }}

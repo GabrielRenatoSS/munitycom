@@ -6,9 +6,9 @@ export default function MenuNavegacaoAdm({ onSearch }) {
   const user = auth?.user;
 
   const username = user?.username ?? "";
-  const foto = user?.foto
-    ? `/storage/${user.foto}`
-    : "/storage/fotos_usuarios/foto.jpg";
+const foto = user?.foto
+    ? `${import.meta.env.VITE_STORAGE_URL}/${user.foto}`
+    : `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`;
 
   const [search, setSearch] = useState("");
 

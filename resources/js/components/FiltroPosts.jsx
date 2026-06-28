@@ -118,7 +118,7 @@ function SpottedCard({ spotted }) {
     >
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
         <img
-          src={spotted.remetente_foto || "/storage/fotos_usuarios/foto.jpg"}
+          src={spotted.remetente_foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
           alt="foto"
           style={{ width: "clamp(20px, 7vw, 36px)", height: "clamp(20px, 7vw, 36px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
         />
@@ -151,7 +151,7 @@ function AwardCard({ award }) {
     >
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
         <img
-          src={award.user_foto || "/storage/fotos_usuarios/foto.jpg"}
+          src={award.user_foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
           alt="foto"
           style={{ width: "clamp(20px, 7vw, 36px)", height: "clamp(20px, 7vw, 36px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
         />

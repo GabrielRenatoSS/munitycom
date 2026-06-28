@@ -26,8 +26,8 @@ class MembroComiteController extends Controller
                     'delegacao' => $membro->delegacao,
                     'username' => $membro->user->username,
                     'foto' => $membro->user->foto 
-                        ? asset('storage/' . $membro->user->foto) 
-                        : asset('fotos_usuarios/foto.png'),
+                        ? Storage::url($membro->user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                 ];
             });
 

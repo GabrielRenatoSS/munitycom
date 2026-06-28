@@ -51,15 +51,15 @@ class PublicationController extends Controller
                     'id' => $post->id,
                     'type' => $post->type,
                     'descricao' => $post->descricao,
-                    'video' => $post->video ? asset('storage/' . $post->video) : null,
-                    'images' => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                    'video' => $post->video ? Storage::url($post->video) : null,
+                    'images' => $post->images->map(fn($img) => Storage::url($img->path)),
                     
                     'username' => $post->user->username,
                     'name' => $post->user->name,
-                    'user_foto' => $post->user->foto
-                        ? asset('storage/' . $post->user->foto)
-                        : asset('storage/fotos_usuarios/foto.jpg'),
-                    
+                    'user_foto' => $post->user->foto 
+                        ? Storage::url($post->user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
+
                     'likes_count'      => $post->likes_count,
                     'comentarios_count' => $post->comentarios_count,
                     'is_liked' => $post->is_liked,
@@ -184,9 +184,9 @@ class PublicationController extends Controller
                     'id'         => $comentario->id,
                     'texto'      => $comentario->texto,
                     'username'   => $comentario->user->username,
-                    'user_foto'  => $comentario->user->foto
-                        ? asset('storage/' . $comentario->user->foto)
-                        : asset('storage/fotos_usuarios/foto.jpg'),
+                    'user_foto' => $comentario->user->foto 
+                        ? Storage::url($comentario->user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                     'name'       => $comentario->user->name,
                     'created_at' => $comentario->created_at->format('d/m/Y H:i'),
                     'can_edit'   => $ehAutor && $dentroDoTempo,
@@ -216,14 +216,14 @@ class PublicationController extends Controller
             'comite'            => $post->comite,
             'delegation'        => $post->delegation,
             'descricao'         => $post->descricao,
-            'video'             => $post->video ? asset('storage/' . $post->video) : null,
+            'video' => $post->video ? Storage::url($post->video) : null,
             'username'          => $post->user->username,
             'name'              => $post->user->name,
-            'user_foto'         => $post->user->foto
-                ? asset('storage/' . $post->user->foto)
-                : asset('storage/fotos_usuarios/foto.jpg'),
-            'images'            => $post->images->isNotEmpty()
-                ? $post->images->map(fn($img) => asset('storage/' . $img->path))
+            'user_foto' => $post->user->foto
+                ? Storage::url($post->user->foto)
+                : Storage::url('fotos_usuarios/foto.jpg'),
+            'images' => $post->images->isNotEmpty()
+                ? $post->images->map(fn($img) => Storage::url($img->path))
                 : null,
             'likes_count'       => $post->likes_count,
             'comentarios_count' => $post->comentarios_count,
@@ -273,8 +273,8 @@ class PublicationController extends Controller
                 'delegation' => $publication->delegation,
                 'mun' => $publication->mun,
                 'username' => $publication->user->username,
-                'video' => $publication->video ? asset('storage/' . $publication->video) : null,
-                'images' => $publication->images->map(fn($img) => asset('storage/' . $img->path)),
+                'video' => $publication->video ? Storage::url($publication->video) : null,
+                'images' => $publication->images->map(fn($img) => Storage::url($img->path)),
             ]
         ]);
     }
@@ -399,9 +399,9 @@ class PublicationController extends Controller
                 'descricao'         => $post->descricao,
                 'username'          => $post->user->username,
                 'name'              => $post->user->name,
-                'user_foto'         => $post->user->foto
-                    ? asset('storage/' . $post->user->foto)
-                    : asset('storage/fotos_usuarios/foto.jpg'),
+                'user_foto' => $post->user->foto 
+                    ? Storage::url($post->user->foto) 
+                    : Storage::url('fotos_usuarios/foto.jpg'),
                 'likes_count'       => $post->likes_count,
                 'comentarios_count' => $post->comentarios_count,
                 'is_liked'          => (bool) $post->is_liked,
@@ -416,12 +416,12 @@ class PublicationController extends Controller
                 ),
             ];
 
-            if ($post->video) {
-                $data['video'] = asset('storage/' . $post->video);
+           if ($post->video) {
+                $data['video'] = Storage::url($post->video);
             }
 
             if ($post->images->isNotEmpty()) {
-                $data['images'] = $post->images->map(fn($img) => asset('storage/' . $img->path));
+                $data['images'] = $post->images->map(fn($img) => Storage::url($img->path));
             }
 
             return $data;

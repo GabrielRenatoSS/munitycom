@@ -9,9 +9,11 @@ export default function MenuNavegacao() {
   const tipo = user?.tipo ?? 0;
   const progresso = user?.progresso ?? 0;
   const username = user?.username ?? "";
+  const storageUrl = import.meta.env.VITE_STORAGE_URL;
+
   const foto = user?.foto
-    ? `/storage/${user.foto}`
-    : "/storage/fotos_usuarios/foto.jpg";
+      ? `${storageUrl}/${user.foto}`
+      : `${storageUrl}/fotos_usuarios/foto.jpg`;
 
   const [search, setSearch] = useState("");
   const [showNotificacoes, setShowNotificacoes] = useState(false);

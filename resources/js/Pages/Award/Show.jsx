@@ -17,7 +17,7 @@ const CARD = {
 function Avatar({ src }) {
   return (
     <img
-      src={src || "/storage/fotos_usuarios/foto.jpg"}
+      src={src || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
       alt="foto"
       style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0, alignSelf: "flex-start" }}
     />

@@ -53,7 +53,7 @@ export default function UserSearch({ initialQuery = "" }) {
             }}
           >
             <img
-              src={user.foto || "/storage/fotos_usuarios/foto.jpg"}
+              src={user.foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
               alt={user.username}
               onClick={() => router.visit(`/profile/${user.username}`)}
               style={{ width: "clamp(32px, 7vw, 44px)", height: "clamp(32px, 7vw, 44px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0, cursor: "pointer" }}

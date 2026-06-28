@@ -104,7 +104,9 @@ class EdicaoController extends Controller
             'secretariado' => $edicao->secretariado->map(fn($membro) => [
                 'cargo' => $membro->cargo,
                 'username' => $membro->user->username,
-                'foto' => $membro->user->foto ? asset('storage/' . $membro->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                'foto' => $membro->user->foto 
+                    ? Storage::url($membro->user->foto) 
+                    : Storage::url('fotos_usuarios/foto.jpg'),
             ]),
 
             'comites' => $edicao->comites->map(fn($comite) => [
@@ -155,9 +157,9 @@ class EdicaoController extends Controller
                     'user_id'    => $s->user_id,
                     'cargo'      => $s->cargo,
                     'user_username' => $s->user->username,
-                    'user_foto'  => $s->user->foto
-                        ? asset('storage/' . $s->user->foto)
-                        : asset('storage/fotos_usuarios/foto.jpg'),
+                    'user_foto' => $s->user->foto 
+                        ? Storage::url($s->user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                 ]),
                 'comites' => $edicao->comites->map(fn($c) => [  // ← dentro de 'edicao'
                     'id'   => $c->id,

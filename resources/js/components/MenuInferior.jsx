@@ -9,9 +9,9 @@ export default function MenuInferior({ onTogglePublications, showPublications })
   const tipo = user?.tipo ?? 0;
   const progresso = user?.progresso ?? 0;
   const username = user?.username ?? "";
-  const foto = user?.foto
-    ? `/storage/${user.foto}`
-    : "/storage/fotos_usuarios/foto.jpg";
+const foto = user?.foto
+    ? `${import.meta.env.VITE_STORAGE_URL}/${user.foto}`
+    : `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`;
 
   const [showNotificacoes, setShowNotificacoes] = useState(false);
   const [notificacoes, setNotificacoes] = useState(null);

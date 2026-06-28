@@ -172,8 +172,12 @@ export default function Informacoes({ user, isOwnProfile }) {
     setData({ _method: "PUT", name: user.name, foto: null, ft_perfil: null });
   }
 
-  const fotoSrc   = previewFoto   || user.foto      || "/storage/fotos_usuarios/foto.jpg";
-  const bannerSrc = previewBanner || user.ft_perfil || "/fotos_perfis/foto-perfil.png";
+  const storageUrl = import.meta.env.VITE_STORAGE_URL;
+
+const fotoSrc   = previewFoto   
+    || (user.foto      ? `${storageUrl}/${user.foto}`      : `${storageUrl}/fotos_usuarios/foto.jpg`);
+const bannerSrc = previewBanner 
+    || (user.ft_perfil ? `${storageUrl}/${user.ft_perfil}` : `${storageUrl}/fotos_perfis/foto-perfil.png`);
 
   return (
     <div style={{ width: "100%", position: "relative" }}>

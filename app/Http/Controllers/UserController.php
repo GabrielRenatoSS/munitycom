@@ -142,8 +142,8 @@ class UserController extends Controller
                         'comite'            => $post->comite,
                         'delegation'        => $post->delegation,
                         'descricao'         => $post->descricao,
-                        'video'             => $post->video ? asset('storage/' . $post->video) : null,
-                        'images'            => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                        'video' => $post->video ? Storage::url($post->video) : null,
+                        'images' => $post->images->map(fn($img) => Storage::url($img->path)),
                         'can_edit'          => $authId === $post->user_id,
                         'can_fix'           => $canFix,
                         'can_fav'           => $canFav,
@@ -153,7 +153,9 @@ class UserController extends Controller
                         'comentarios_count' => $post->comentarios_count,
                         'is_liked'          => (bool) $post->is_liked,
                         'is_favoritado'     => (bool) $post->is_favoritado,
-                        'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                        'user_foto' => $post->user->foto 
+                            ? Storage::url($post->user->foto) 
+                            : Storage::url('fotos_usuarios/foto.jpg'),
                         'name'       => $post->user->name,
                         'username'   => $post->user->username,
                         'created_at' => $post->created_at->format('d/m/Y'),
@@ -177,7 +179,9 @@ class UserController extends Controller
                         'mun'          => $award->mun_id ? $award->creator?->name : $award->mun,
                         'delegation' => $award->delegation,
                         'user_username' => $award->user->name,
-                        'user_foto' => $award->user->foto ? asset('storage/' . $award->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                        'user_foto' => $award->user->foto 
+                            ? Storage::url($award->user->foto) 
+                            : Storage::url('fotos_usuarios/foto.jpg'),
                         'comite'     => $award->comite,
                         'can_edit'   => $authId && ($authId === $award->user_id || ($award->mun_id && $authId === $award->mun_id)),
                     ];
@@ -225,7 +229,11 @@ class UserController extends Controller
                             'comite'       => $spotted->comite?->name,
                             'remetente'    => $spotted->anonimo ? "Anônimo" : $spotted->remetente?->delegacao,
                             'destinatario' => $spotted->destinatario?->delegacao,
-                            'remetente_foto'     => $spotted->anonimo ? asset('storage/fotos_usuarios/foto.jpg') : ($spotted->remetente?->user?->foto ? asset('storage/' . $spotted->remetente->user->foto) : asset('storage/fotos_usuarios/foto.jpg')),
+                            'remetente_foto' => $spotted->anonimo 
+                                ? Storage::url('fotos_usuarios/foto.jpg') 
+                                : ($spotted->remetente?->user?->foto 
+                                    ? Storage::url($spotted->remetente->user->foto) 
+                                    : Storage::url('fotos_usuarios/foto.jpg')),
                             'remetente_username' => $spotted->anonimo ? "Anônimo" : $spotted->remetente?->user?->username,
                             'destinatario_username' => $spotted->destinatario?->user?->username,
                             'card_type' => 'spotted',
@@ -241,7 +249,9 @@ class UserController extends Controller
                     'id'       => $mun->id,
                     'name'     => $mun->name,
                     'username' => $mun->username,
-                    'foto' => $mun->foto ? asset('storage/' . $mun->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                    'foto' => $mun->foto 
+                        ? Storage::url($mun->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                 ]);
 
             return Inertia::render('User/Show', [
@@ -250,12 +260,12 @@ class UserController extends Controller
                     'name'         => $user->name,
                     'username'     => $user->username,
                     'tipo'         => $user->tipo,
-                    'foto'      => $user->foto 
-                        ? asset('storage/' . $user->foto) 
-                        : asset('storage/fotos_usuarios/foto.jpg'),
+                    'foto' => $user->foto 
+                        ? Storage::url($user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                     'ft_perfil' => $user->ft_perfil 
-                        ? asset('storage/' . $user->ft_perfil) 
-                        : asset('storage/fotos_perfis/foto-perfil.png'),
+                        ? Storage::url($user->ft_perfil) 
+                        : Storage::url('fotos_perfis/foto-perfil.png'),
                     'progresso'    => $user->progresso,
                     'seguindo'     => $seguindo,
                     'seguidores'   => $seguidores,
@@ -337,8 +347,8 @@ class UserController extends Controller
                         'comite'            => $post->comite,
                         'delegation'        => $post->delegation,
                         'descricao'         => $post->descricao,
-                        'video'             => $post->video ? asset('storage/' . $post->video) : null,
-                        'images'            => $post->images->map(fn($img) => asset('storage/' . $img->path)),
+                        'video' => $post->video ? Storage::url($post->video) : null,
+                        'images' => $post->images->map(fn($img) => Storage::url($img->path)),
                         'can_edit'          => $authId === $post->user_id,
                         'can_fix'           => $canFix,
                         'can_fav'           => $canFav,
@@ -348,7 +358,9 @@ class UserController extends Controller
                         'comentarios_count' => $post->comentarios_count,
                         'is_liked' => (bool) $post->is_liked,
                         'is_favoritado' => (bool) $post->is_favoritado,
-                        'user_foto'  => $post->user->foto ? asset('storage/' . $post->user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                        'user_foto' => $post->user->foto 
+    ? Storage::url($post->user->foto) 
+    : Storage::url('fotos_usuarios/foto.jpg'),
                         'name'       => $post->user->name,
                         'username'   => $post->user->username,
                         'created_at' => $post->created_at->format('d/m/Y'),
@@ -365,9 +377,9 @@ class UserController extends Controller
                         'id'        => $m->id,
                         'delegacao' => $m->delegacao,
                         'username'  => $m->user->username,
-                        'foto'      => $m->user->foto
-                            ? asset('storage/' . $m->user->foto)
-                            : asset('storage/fotos_usuarios/foto.jpg'),
+                        'foto' => $m->user->foto 
+                            ? Storage::url($m->user->foto) 
+                            : Storage::url('fotos_usuarios/foto.jpg'),
                     ])
                 : collect();
 
@@ -410,9 +422,9 @@ class UserController extends Controller
                             ? $documento->signatarios->map(fn($s) => $s->delegado?->delegacao)
                             : null,
                         'is_own_document' => $authId && ($ehPatrocinador || $ehMun || $ehChairOuMesa),
-                        'autor_foto'      => $primeiroPatr?->user?->foto
-                            ? asset('storage/' . $primeiroPatr->user->foto)
-                            : asset('storage/fotos_usuarios/foto.jpg'),
+                        'autor_foto' => $primeiroPatr?->user?->foto
+                            ? Storage::url($primeiroPatr->user->foto)
+                            : Storage::url('fotos_usuarios/foto.jpg'),
                         'autor_username'  => $primeiroPatr?->user?->username,
                         'autor_delegacao' => $primeiroPatr?->delegacao,
                     ];
@@ -425,12 +437,12 @@ class UserController extends Controller
                 'name'         => $user->name,
                 'username'     => $user->username,
                 'tipo'         => $user->tipo,
-                'foto'      => $user->foto 
-                    ? asset('storage/' . $user->foto) 
-                    : asset('storage/fotos_usuarios/foto.jpg'),
+                'foto' => $user->foto 
+                    ? Storage::url($user->foto) 
+                    : Storage::url('fotos_usuarios/foto.jpg'),
                 'ft_perfil' => $user->ft_perfil 
-                    ? asset('storage/' . $user->ft_perfil) 
-                    : asset('storage/fotos_perfis/foto-perfil.png'),
+                    ? Storage::url($user->ft_perfil) 
+                    : Storage::url('fotos_perfis/foto-perfil.png'),
                 'progresso'    => $user->progresso,
                 'seguindo'     => $seguindo,
                 'seguidores'   => $seguidores,
@@ -557,8 +569,8 @@ class UserController extends Controller
                     'name' => $user->name,
                     'username' => $user->username,
                     'foto' => $user->foto 
-                        ? asset('storage/' . $user->foto) 
-                        : asset('storage/fotos_usuarios/foto.jpg'),
+                        ? Storage::url($user->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                     'is_following' => $user->is_following,
                     'is_interested' => ($auth->tipo === 0 && $user->tipo === 1)
                         ? (bool) $user->is_interested
@@ -594,7 +606,9 @@ class UserController extends Controller
                     'id'           => $mun->id,
                     'name'         => $mun->name,
                     'username'     => $mun->username,
-                    'foto' => $mun->foto ? asset('storage/' . $mun->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+                    'foto' => $mun->foto 
+                        ? Storage::url($mun->foto) 
+                        : Storage::url('fotos_usuarios/foto.jpg'),
                     'cidade'       => $mun->cidade,
                     'is_following' => false,
                     'is_interested' => DB::table('interests')
@@ -641,7 +655,9 @@ class UserController extends Controller
             'posicao'      => $index + 1,
             'name'         => $user->name,
             'username'     => $user->username,
-            'foto'         => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'foto' => $user->foto 
+                ? Storage::url($user->foto) 
+                : Storage::url('fotos_usuarios/foto.jpg'),
             'awards_count' => $user->awards_count,
         ]);
 
@@ -659,7 +675,9 @@ class UserController extends Controller
             'posicao'      => $posicaoIndex + 1,
             'name'         => $userAuth->name,
             'username'     => $userAuth->username,
-            'foto'         => $userAuth->foto ? asset('storage/' . $userAuth->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'foto' => $userAuth->foto 
+                ? Storage::url($userAuth->foto) 
+                : Storage::url('fotos_usuarios/foto.jpg'),
             'awards_count' => $userAuth->awards_count,
         ] : null;
 

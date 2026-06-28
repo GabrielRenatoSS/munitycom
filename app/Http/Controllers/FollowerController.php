@@ -143,7 +143,9 @@ class FollowerController extends Controller
             'id'           => $user->id,
             'name'         => $user->name,
             'username'     => $user->username,
-            'foto'         => $user->foto ? asset('storage/' . $user->foto) : asset('storage/fotos_usuarios/foto.jpg'),
+            'foto' => $user->foto 
+                ? Storage::url($user->foto) 
+                : Storage::url('fotos_usuarios/foto.jpg'),
             'is_following' => Follower::where('follower_id', $authId)
                                 ->where('following_id', $user->id)
                                 ->exists(),

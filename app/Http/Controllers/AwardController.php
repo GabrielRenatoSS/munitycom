@@ -81,7 +81,9 @@ class AwardController extends Controller
             'delegation' => $award->delegation,
             'comite' => $award->comite,
             'user_username' => $award->user->username,
-            'user_foto' => $award->user->foto ? asset('storage/' . $award->user->foto) : '/fotos_usuarios/foto.jpg',
+            'user_foto' => $award->user->foto 
+                ? Storage::url($award->user->foto) 
+                : Storage::url('fotos_usuarios/foto.jpg'),
             'can_edit' => $canEdit,
         ];
 

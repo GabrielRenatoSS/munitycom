@@ -46,7 +46,7 @@ function NoticiaCard({ doc }) {
       {/* Cabeçalho */}
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
         <img
-          src={doc.autor_foto || "/storage/fotos_usuarios/foto.jpg"}
+          src={doc.autor_foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
           alt="foto"
           onClick={() => doc.autor_username && router.visit(`/profile/${doc.autor_username}`)}
           style={{ width: "clamp(20px, 7vw, 36px)", height: "clamp(20px, 7vw, 36px)", borderRadius: "50%", objectFit: "cover", flexShrink: 0, cursor: "pointer" }}
@@ -136,7 +136,7 @@ function DocumentoCard({ doc, onOpenDoc }) {
       {doc.autor_delegacao && (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <img
-            src={doc.autor_foto || "/storage/fotos_usuarios/foto.jpg"}
+            src={doc.autor_foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
             alt="foto"
             style={{
               width: "clamp(20px, 7vw, 36px)",

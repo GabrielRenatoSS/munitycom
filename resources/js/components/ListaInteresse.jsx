@@ -110,7 +110,7 @@ export default function ListaInteresse({ interests = [], isOwnProfile = false })
               style={{ position: "relative", width: "clamp(58px, 16.66%, 120px)", height: "clamp(58px, 16.66%, 120px)", flexShrink: 0 }}
             >
               <img
-                src={mun.foto || "/storage/fotos_usuarios/foto.jpg"}
+                src={mun.foto || `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`}
                 alt={mun.name}
                 onClick={() => !editando && router.get(`/profile/${mun.username}`)}
                 style={{

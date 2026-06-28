@@ -30,8 +30,8 @@ export default function UserAdm({ users }) {
       {lista.map((user) => {
         const bloqueado = bloqueios[user.id];
         const foto = user.foto
-          ? (user.foto.startsWith('http') ? user.foto : `/storage/${user.foto}`)
-          : "/storage/fotos_usuarios/foto.jpg";
+          ? (user.foto.startsWith('http') ? user.foto : `${import.meta.env.VITE_STORAGE_URL}/${user.foto}`)
+          : `${import.meta.env.VITE_STORAGE_URL}/fotos_usuarios/foto.jpg`;
         const dataCadastro = user.created_at
           ? new Date(user.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
           : "—";
