@@ -114,9 +114,9 @@ export default function Purpose() {
         </h2>
 
         {[
-          { image: "/images/proposito-1.jpeg", label: "CONECTAR\nDELEGADOS E\nMUNS", alignItems: "flex-end", justifyContent: "flex-start", textAlign: "left" },
-          { image: "/images/proposito-2.jpeg", label: "REUNIR OS\nREGISTROS\nDAS MUNS\nQUE VOCÊ\nPARTICIPOU!", alignItems: "flex-start", justifyContent: "flex-end", textAlign: "right" },
-          { image: "/images/proposito-3.jpeg", label: "DEMOCRATIZAR\nO ACESSO À\nMUNS", alignItems: "flex-end", justifyContent: "flex-start", textAlign: "left" },
+          { image: "/images/proposito-1.png", label: "CONECTAR\nDELEGADOS E\nMUNS", alignItems: "flex-end", justifyContent: "flex-start", textAlign: "left" },
+          { image: "/images/proposito-2.png", label: "REUNIR OS\nREGISTROS\nDAS MUNS\nQUE VOCÊ\nPARTICIPOU!", alignItems: "flex-start", justifyContent: "flex-end", textAlign: "right" },
+          { image: "/images/proposito-3.png", label: "DEMOCRATIZAR\nO ACESSO À\nMUNS", alignItems: "flex-end", justifyContent: "flex-start", textAlign: "left" },
         ].map((card, i) => (
           <div key={i} className="relative w-full overflow-hidden rounded-[2rem]" style={{ aspectRatio: "4/3" }}>
             <img src={card.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
