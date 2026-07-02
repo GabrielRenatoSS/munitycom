@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\Notificacao;
+use Illuminate\Support\Facades\Storage;
 
 class FollowerController extends Controller
 {
