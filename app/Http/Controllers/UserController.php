@@ -15,6 +15,7 @@ use App\Models\Spotted;
 use App\Models\Edicao;
 use App\Models\Documento;
 use App\Models\MembroComite;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
