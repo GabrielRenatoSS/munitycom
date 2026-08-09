@@ -58,7 +58,7 @@ class UserController extends Controller
             'pais'     => 'required',
             'estado'   => 'required',
             'cidade'   => 'required',
-            'foto'  => 'required|image|max:2048',
+            'foto'  => 'required|image|max:5120',
         ]);
 
         $caminhoFoto = $request->file('foto')->store('fotos_usuarios', config('filesystems.default'));
